@@ -1,76 +1,181 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, session, url_for, flash, current_app
+from flask_jwt_extended import (
+    create_access_token, jwt_required, get_jwt_identity,
+    set_access_cookies, unset_jwt_cookies
+)
 from werkzeug.security import generate_password_hash, check_password_hash
-from . import mysql
+from datetime import datetime
+import csv
+import io
+import os
+import MySQLdb.cursors
 
-bp = Blueprint("main", __name__)
+from . import mysql  # initialized in __init__.py
 
-# ---------------- HOME ----------------
-@bp.route("/")
+main = Blueprint('main', __name__, url_prefix="/")
+
+# ---------- Helpers ----------
+def dict_cursor():
+    return mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+
+# ---------- Home / Login page ----------
+@main.route("/")
 def home():
-    return redirect(url_for("main.login"))
+    return render_template("login.html")
 
-# ---------------- REGISTER ----------------
-@bp.route("/register", methods=["GET", "POST"])
+# ---------- Register ----------
+@main.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form["username"]
-        email = request.form["email"]
-        password = generate_password_hash(request.form["password"])
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
 
-        try:
-            cur = mysql.connection.cursor()
-            cur.execute(
-                "INSERT INTO users (username, email, password) VALUES (%s, %s, %s)",
-                (username, email, password),
-            )
-            mysql.connection.commit()
-            cur.close()
-
-            flash("Registration successful! Please login.", "success")
-            return redirect(url_for("main.login"))
-
-        except Exception as e:
-            flash(f"Error: {str(e)}", "danger")
+        if not username or not email or not password:
+            flash("All fields are required.", "danger")
             return redirect(url_for("main.register"))
+
+        cursor = dict_cursor()
+        # unique email check
+        cursor.execute("SELECT user_id FROM users WHERE email=%s", (email,))
+        if cursor.fetchone():
+            flash("Email already registered. Please login.", "warning")
+            cursor.close()
+            return redirect(url_for("main.home"))
+
+        password_hash = generate_password_hash(password)
+        cursor.execute(
+            "INSERT INTO users (username, email, password_hash, created_at) VALUES (%s, %s, %s, %s)",
+            (username, email, password_hash, datetime.utcnow())
+        )
+        mysql.connection.commit()
+        cursor.close()
+        flash("Registration successful! Please login.", "success")
+        return redirect(url_for("main.home"))
 
     return render_template("register.html")
 
-# ---------------- LOGIN ----------------
-@bp.route("/login", methods=["GET", "POST"])
+# ---------- Login ----------
+@main.route("/login", methods=["POST"])
 def login():
-    if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
+    email = request.form.get("email", "").strip().lower()
+    password = request.form.get("password", "")
 
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM users WHERE email = %s", (email,))
-        user = cur.fetchone()
-        cur.close()
+    cursor = dict_cursor()
+    cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
+    user = cursor.fetchone()
+    cursor.close()
 
-        if user:
-            db_password = user[3]   # password column (hashed)
-            if check_password_hash(db_password, password):
-                session["user_id"] = user[0]
-                session["username"] = user[1]
-                flash("Login successful!", "success")
-                return redirect(url_for("main.dashboard"))
-            else:
-                flash("Invalid password!", "danger")
-        else:
-            flash("Email not found!", "danger")
+    if user and check_password_hash(user["password_hash"], password):
+        # Store user_id as JWT identity
+        access_token = create_access_token(identity=str(user["user_id"]))
+        response = redirect(url_for("main.dashboard"))
+        set_access_cookies(response, access_token)
+        flash("Login successful!", "success")
+        return response
 
-    return render_template("login.html")
+    flash("Invalid email or password.", "danger")
+    return redirect(url_for("main.home"))
 
-# ---------------- DASHBOARD ----------------
-@bp.route("/dashboard")
+
+# ---------- Dashboard (Protected) ----------
+@main.route("/dashboard")
+@jwt_required()
 def dashboard():
-    if "user_id" in session:
-        return f"Welcome {session['username']}! 🎉"
-    return redirect(url_for("main.login"))
+    user_id = get_jwt_identity()
+    cursor = dict_cursor()
+    cursor.execute("SELECT user_id, username, email FROM users WHERE user_id=%s", (user_id,))
+    user = cursor.fetchone()
+    cursor.close()
+    return render_template("dashboard.html", user=user)
 
-# ---------------- LOGOUT ----------------
-@bp.route("/logout")
+
+# ---------- Profile (view + update) ----------
+@main.route("/profile", methods=["GET", "POST"])
+@jwt_required()
+def profile():
+    user_id = get_jwt_identity()
+    cursor = dict_cursor()
+
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        if not username or not email:
+            flash("Username and Email are required.", "danger")
+            return redirect(url_for("main.profile"))
+
+        # check if new email already used by another user
+        cursor.execute("SELECT user_id FROM users WHERE email=%s AND user_id<>%s", (email, user_id))
+        if cursor.fetchone():
+            flash("Email already in use by another account.", "warning")
+        else:
+            cursor.execute(
+                "UPDATE users SET username=%s, email=%s WHERE user_id=%s",
+                (username, email, user_id)
+            )
+            mysql.connection.commit()
+            flash("Profile updated successfully!", "success")
+
+
+    # Fetch user
+    cursor.execute("SELECT user_id, username, email FROM users WHERE user_id=%s", (user_id,))
+    user = cursor.fetchone()
+
+
+    # Fetch recent reviews by user
+    cursor.execute("""
+        SELECT review_text, uploaded_at, overall_sentiment, overall_sentiment_score
+        FROM reviews
+        WHERE user_id=%s
+        ORDER BY uploaded_at DESC
+        LIMIT 50
+    """, (user_id,))
+    reviews = cursor.fetchall()
+    cursor.close()
+
+    return render_template("profile.html", user=user, reviews=reviews)
+
+
+# ---------- Upload Reviews (raw text) ----------
+@main.route("/upload_review", methods=["GET", "POST"])
+@jwt_required()
+def upload_review():
+    user_id = get_jwt_identity()
+    if request.method == "POST":
+        # Case 1: Raw review text
+        raw_review = (request.form.get("raw_review") or "").strip()
+        if raw_review:
+            cursor = dict_cursor()
+            cursor.execute("""
+                INSERT INTO reviews (user_id, review_text, product_id, category, uploaded_at, overall_sentiment, overall_sentiment_score)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (user_id, raw_review, None, None, datetime.utcnow(), None, None))
+            mysql.connection.commit()
+            cursor.close()
+            flash("Review submitted successfully!", "success")
+            return redirect(url_for("main.upload_review"))
+
+       
+
+        # If neither provided
+        flash("Please provide raw review text", "warning")
+        return redirect(url_for("main.upload_review"))
+
+    # GET: show recent uploads for this user
+    cursor = dict_cursor()
+    cursor.execute("""
+        SELECT review_text, uploaded_at FROM reviews
+        WHERE user_id=%s ORDER BY uploaded_at DESC LIMIT 20
+    """, (user_id,))
+    reviews = cursor.fetchall()
+    cursor.close()
+    return render_template("upload_reviews.html", reviews=reviews)
+
+# ---------- Logout ----------
+@main.route("/logout")
 def logout():
-    session.clear()
+    response = redirect(url_for("main.home"))
+    unset_jwt_cookies(response)
     flash("You have been logged out.", "info")
-    return redirect(url_for("main.login"))
+    return response
