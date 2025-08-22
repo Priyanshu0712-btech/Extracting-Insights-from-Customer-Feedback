@@ -2,7 +2,7 @@ from flask import Flask
 from flask_mysqldb import MySQL
 from flask_jwt_extended import JWTManager
 import os
-import config
+from interninfos import config
 
 mysql = MySQL()
 jwt = JWTManager()
