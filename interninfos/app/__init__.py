@@ -2,7 +2,11 @@ from flask import Flask
 from flask_mysqldb import MySQL
 from flask_jwt_extended import JWTManager
 import os
-from interninfos import config
+import sys
+
+# Add parent directory to Python path to allow imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import Config
 
 mysql = MySQL()
 jwt = JWTManager()
@@ -11,11 +15,11 @@ def create_app():
     app = Flask(__name__)
 
     # Load configuration
-    app.config['MYSQL_HOST'] = config.Config.MYSQL_HOST
-    app.config['MYSQL_USER'] = config.Config.MYSQL_USER
-    app.config['MYSQL_PASSWORD'] = config.Config.MYSQL_PASSWORD
-    app.config['MYSQL_DB'] = config.Config.MYSQL_DB
-    app.config['JWT_SECRET_KEY'] = config.Config.JWT_SECRET_KEY
+    app.config['MYSQL_HOST'] = Config.MYSQL_HOST
+    app.config['MYSQL_USER'] = Config.MYSQL_USER
+    app.config['MYSQL_PASSWORD'] = Config.MYSQL_PASSWORD
+    app.config['MYSQL_DB'] = Config.MYSQL_DB
+    app.config['JWT_SECRET_KEY'] = Config.JWT_SECRET_KEY
 
     # JWT Token stored in cookies
     app.config['JWT_TOKEN_LOCATION'] = ['cookies']
