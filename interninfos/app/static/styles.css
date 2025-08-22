@@ -1,0 +1,221 @@
+/* Global styles and animations */
+:root {
+    --bg-dark: #1b5fe7;
+    --bg-darker: #6396c9a4;
+    --text: #ffffff;
+    --text-muted: rgba(255, 255, 255, 0.7);
+}
+
+body {
+    background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+    color: var(--text);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Enhanced card animations with glassmorphism */
+.card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    transform: translateY(0);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    position: relative;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(255, 255, 255, 0) 100%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.12),
+                0 4px 8px rgba(0, 0, 0, 0.06);
+}
+
+.card:hover::before {
+    transform: translateX(100%);
+}
+
+/* Card header with gradient effect */
+.card-header {
+    background: linear-gradient(90deg, 
+        rgba(6, 57, 139, 0.894) 0%,
+        rgba(6, 57, 139, 0.894) 50%,
+        rgba(6, 57, 139, 0.894) 100%);
+    border-bottom: 1px solid rgba(6, 57, 139, 0.894);
+    color: var(--text);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+/* Gradient buttons with shine effect */
+.btn {
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0.05));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    color: var(--text);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0) 100%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:hover::before {
+    transform: translateX(100%);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Form controls with glow effect */
+.form-control {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+/* Animated alerts with blur effect */
+.alert {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    animation: slideInBlur 0.4s ease-out forwards;
+}
+
+@keyframes slideInBlur {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+        backdrop-filter: blur(0);
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+        backdrop-filter: blur(10px);
+    }
+}
+
+/* List items with shine effect */
+.list-group-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.list-group-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(255, 255, 255, 0) 100%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.list-group-item:hover {
+    transform: translateX(4px);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.list-group-item:hover::before {
+    transform: translateX(100%);
+}
+
+/* Enhanced textareas with glassmorphism */
+textarea.form-control {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    transition: all 0.3s ease;
+}
+
+textarea.form-control:focus {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+/* Navbar with glass effect */
+.navbar {
+    background: rgba(24, 48, 96, 0.8);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.navbar-brand {
+    color: var(--text) !important;
+    font-weight: 600;
+}
+
+.nav-link {
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: var(--text);
+}
+
+/* Custom text selection color */
+::selection {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+}

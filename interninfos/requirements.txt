@@ -1,1 +1,6 @@
 flask
+flask-mysqldb
+flask-jwt-extended
+pymysql
+python-dotenv
+werkzeug
