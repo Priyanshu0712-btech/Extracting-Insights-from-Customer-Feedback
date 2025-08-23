@@ -22,7 +22,7 @@ Small Flask app for uploading and reviewing customer feedback.
 
 3. Create the database (one-time)
 
-   Use your MySQL client to import `schema.sql` or run the commands inside it.
+   Use your MySQL client to import `schema.sql` or run the commands inside it..
 
 4. Run the app
 
