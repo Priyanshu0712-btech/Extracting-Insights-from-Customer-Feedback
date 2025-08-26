@@ -152,37 +152,37 @@ def upload_review():
             flash("Review submitted successfully!", "success")
             return redirect(url_for("main.profile"))
 
-        # # Case 2: CSV upload
-        # file = request.files.get("file")
-        # if file and file.filename.lower().endswith(".csv"):
-        #     try:
-        #         stream = io.StringIO(file.stream.read().decode("utf-8"))
-        #         reader = csv.DictReader(stream)
-        #         if "review_text" not in reader.fieldnames:
-        #             flash("CSV must contain a 'review_text' column.", "danger")
-        #             return redirect(url_for("main.upload_review"))
+        # Case 2: CSV upload
+        file = request.files.get("file")
+        if file and file.filename.lower().endswith(".csv"):
+            try:
+                stream = io.StringIO(file.stream.read().decode("utf-8"))
+                reader = csv.DictReader(stream)
+                if "review_text" not in reader.fieldnames:
+                    flash("CSV must contain a 'review_text' column.", "danger")
+                    return redirect(url_for("main.upload_review"))
 
-        #         rows = []
-        #         for row in reader:
-        #             text = (row.get("review_text") or "").strip()
-        #             if text:
-        #                 rows.append((user_id, text, None, None, datetime.utcnow(), None, None))
+                rows = []
+                for row in reader:
+                    text = (row.get("review_text") or "").strip()
+                    if text:
+                        rows.append((user_id, text, None, None, datetime.utcnow(), None, None))
 
-        #         if not rows:
-        #             flash("No valid reviews found in CSV.", "warning")
-        #             return redirect(url_for("main.upload_review"))
+                if not rows:
+                    flash("No valid reviews found in CSV.", "warning")
+                    return redirect(url_for("main.upload_review"))
 
-        #         cursor = mysql.connection.cursor()
-        #         cursor.executemany("""
-        #             INSERT INTO reviews (user_id, review_text, product_id, category, uploaded_at, overall_sentiment, overall_sentiment_score)
-        #             VALUES (%s, %s, %s, %s, %s, %s, %s)
-        #         """, rows)
-        #         mysql.connection.commit()
-        #         cursor.close()
-        #         flash(f"Uploaded {len(rows)} reviews from CSV.", "success")
-        #     except Exception as e:
-        #         flash(f"Failed to process CSV: {e}", "danger")
-        #     return redirect(url_for("main.profile"))
+                cursor = mysql.connection.cursor()
+                cursor.executemany("""
+                    INSERT INTO reviews (user_id, review_text, product_id, category, uploaded_at, overall_sentiment, overall_sentiment_score)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, rows)
+                mysql.connection.commit()
+                cursor.close()
+                flash(f"Uploaded {len(rows)} reviews from CSV.", "success")
+            except Exception as e:
+                flash(f"Failed to process CSV: {e}", "danger")
+            return redirect(url_for("main.profile"))
 
         # If neither provided
         flash("Please provide raw review text", "warning")    #Please provide raw review text or upload a CSV file.
@@ -225,3 +225,4 @@ def logout():
     unset_jwt_cookies(response)
     flash("You have been logged out.", "info")
     return response
+
