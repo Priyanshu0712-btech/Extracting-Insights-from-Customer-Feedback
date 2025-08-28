@@ -3,20 +3,11 @@
 {% block title %}Dashboard | ReviewSense{% endblock %}
 
 {% block content %}
-<nav class="navbar navbar-expand-lg">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="#">ReviewSense</a>
-        <div class="navbar-nav ms-auto">
-            <span class="navbar-text text-white me-3">Welcome, {{ user.username }}! 👋</span>
-            <a class="nav-link btn btn-sm btn-danger text-white px-3 rounded-3" href="{{ url_for('main.logout') }}">Logout</a>
-        </div>
-    </div>
-</nav>
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card shadow-lg rounded-4">
-                <div class="card-header bg-primary text-white text-center">
+                <div class="card-header text-black text-center" style="background-color: #f0f8ff">
                     <h3>Dashboard</h3>
                 </div>
                 <div class="card-body">
@@ -25,14 +16,18 @@
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                     <p class="lead text-center">
+                        <strong>Welcome, {{ user.username }}! 👋</strong>
+                    </p>
+                    
+                    <p class="lead text-center">
                         This is a <strong>protected page</strong> that requires authentication.
                     </p>
                     <hr>
                     <div class="text-center">
                         <h5 class="mb-3">🔍 What do you want to do next?</h5>
-                        <a href="{{ url_for('main.profile') }}" class="btn btn-outline-primary me-2">View Profile</a>
-                        <a href="{{ url_for('main.upload_review') }}" class="btn btn-outline-success me-2">Upload Reviews</a>
-                        <a href="#" class="btn btn-outline-warning">Settings</a>
+                        <a href="{{ url_for('main.profile') }}" class="btn btn-primary me-2">View Profile</a>
+                        <a href="{{ url_for('main.upload_review') }}" class="btn btn-success me-2">Upload Reviews</a>
+                        <a href="#" class="btn btn-warning">Settings</a>
                     </div>
                 </div>
             </div>
