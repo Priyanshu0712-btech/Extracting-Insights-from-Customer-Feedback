@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Upload Reviews{% endblock %}
+{% block title %}Upload Reviews | ReviewSense{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
     <h2 class="mb-4">Upload Reviews</h2>
 
     <div class="card shadow-sm mb-4">
-        <div class="card-header bg-secondary text-white">Upload CSV File</div>
+        <div class="card-header text-dark fw-bold" style="background-color: #f0f8ff">Upload CSV File</div>
         <div class="card-body">
             <form method="POST" enctype="multipart/form-data">
                 <div class="mb-3">
@@ -20,7 +20,7 @@
     </div>
     
     <div class="card shadow-sm">
-        <div class="card-header bg-secondary text-white">Submit a Review</div>
+        <div class="card-header text-dark fw-bold" style="background-color: #f0f8ff">Submit a Review</div>
         <div class="card-body">
             <form method="POST">
                 <div class="mb-3">
