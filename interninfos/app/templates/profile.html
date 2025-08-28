@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}User Profile - Dashboard{% endblock %}
+{% block title %}User Profile | ReviewSense{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
@@ -8,7 +8,7 @@
 
     <!-- Update profile -->
     <div class="card shadow-sm mb-4">
-        <div class="card-header bg-secondary text-white">Update Profile</div>
+        <div class="card-header text-black fw-bold" style="background-color: #e7f4fe;">Update Profile</div>
         <div class="card-body">
             <form method="POST">
                 <div class="row g-3">
@@ -28,14 +28,14 @@
 
     <!-- Uploaded Reviews -->
     <div class="card shadow-sm mb-4">
-        <div class="card-header bg-primary text-white">Your Uploaded Reviews</div>
+        <div class="card-header text-dark fw-bold" style="background-color: #e7f4fe;">Your Uploaded Reviews</div>
         <div class="card-body">
             {% if reviews %}
                 <ul class="list-group">
                   {% for r in reviews %}
                     <li class="list-group-item">
-                      <label class="form-label fw-bold">Review ({{ r.uploaded_at.strftime("%Y-%m-%d") }})</label>
-                      <textarea class="form-control" rows="4" readonly>{{ r.review_text }}</textarea>
+                      <label class="form-label">Review ({{ r.uploaded_at.strftime("%Y-%m-%d") }})</label>
+                      <textarea class="form-control" rows="1" readonly>{{ r.review_text }}</textarea>
             
                       <div class="mt-2 d-flex justify-content-end">
                         <!-- Delete Button -->
@@ -55,6 +55,6 @@
         </div>
     </div>
 
-    <a href="{{ url_for('main.upload_review') }}" class="btn btn-success">+ Upload New Review</a>
+    <a href="{{ url_for('main.upload_review') }}" class="btn btn-primary">+ Upload New Review</a>
 </div>
 {% endblock %}
