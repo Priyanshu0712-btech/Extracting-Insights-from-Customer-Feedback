@@ -69,7 +69,7 @@ def login():
         set_access_cookies(response, access_token)
         flash("Admin login successful!", "success")
         return response
-    
+      
     cursor = dict_cursor()
     cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
     user = cursor.fetchone()
