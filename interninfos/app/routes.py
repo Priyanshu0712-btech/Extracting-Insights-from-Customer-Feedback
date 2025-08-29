@@ -81,12 +81,17 @@ def login():
         response = redirect(url_for("main.dashboard"))
         set_access_cookies(response, access_token)
         flash("Login successful!", "success")
+        if not request.referrer or 'logout' not in request.referrer:
+            flash("Login successful!", "success")
         return response
+        
 
     flash("Invalid email or password.", "danger")
     return redirect(url_for("main.home"))
 
-
+@main.route("/admin")
+def admin():
+    return render_template("admin.html")
 # ---------- Dashboard (Protected) ----------
 @main.route("/dashboard")
 @jwt_required()
@@ -233,5 +238,6 @@ def logout():
     unset_jwt_cookies(response)
     flash("You have been logged out.", "info")
     return response
+
 
 
