@@ -10,7 +10,7 @@ import io
 import os
 import MySQLdb.cursors
 
-from . import mysql  # initialized in __init__.py
+from . import mysql  # initialized in _init_.py
 
 main = Blueprint('main', __name__, url_prefix="/")
 
@@ -57,41 +57,53 @@ def register():
     return render_template("register.html")
 
 # ---------- Login ----------
-@main.route("/login", methods=["POST"])
+@main.route("/login", methods=["GET", "POST"])
 def login():
-    email = request.form.get("email", "").strip().lower()
-    password = request.form.get("password", "")
-    
-    # Special case for admin login
-    if email == "admin@gmail.com" and password == "admin":
-        access_token = create_access_token(identity="admin")
-        response = redirect(url_for("main.admin"))
-        set_access_cookies(response, access_token)
-        flash("Admin login successful!", "success")
-        return response
-      
-    cursor = dict_cursor()
-    cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
-    user = cursor.fetchone()
-    cursor.close()
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
 
-    if user and check_password_hash(user["password_hash"], password):
-        # Store user_id as JWT identity
-        access_token = create_access_token(identity=str(user["user_id"]))
-        response = redirect(url_for("main.dashboard"))
-        set_access_cookies(response, access_token)
-        flash("Login successful!", "success")
-        if not request.referrer or 'logout' not in request.referrer:
+        # Permanent admin login (hardcoded)
+        if email == "admin@gmail.com" and password == "admin":
+            session["is_admin"] = True
+            flash("Admin login successful!", "success")
+            return redirect(url_for("main.admin_dashboard"))
+
+        cursor = dict_cursor()
+        cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
+        user = cursor.fetchone()
+        cursor.close()
+
+        if user and check_password_hash(user["password_hash"], password):
+            access_token = create_access_token(identity=str(user["user_id"]))
+            response = redirect(url_for("main.dashboard"))
+            set_access_cookies(response, access_token)
             flash("Login successful!", "success")
-        return response
-        
+            return response
 
-    flash("Invalid email or password.", "danger")
-    return redirect(url_for("main.home"))
+        flash("Invalid email or password.", "danger")
+        return redirect(url_for("main.login"))
 
-@main.route("/admin")
-def admin():
-    return render_template("admin.html")
+    # If it's a GET request, just render login page
+    return render_template("login.html")
+# ---------- Admin Dashboard ----------
+@main.route("/admin_dashboard")
+def admin_dashboard():
+    if not session.get("is_admin"):
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for("main.login"))
+    cursor = dict_cursor()
+    cursor.execute("SELECT user_id, username, email FROM users ORDER BY user_id")
+    users = cursor.fetchall()
+    # For each user, fetch their reviews
+    for user in users:
+        cursor.execute("SELECT review_text, uploaded_at FROM reviews WHERE user_id=%s ORDER BY uploaded_at DESC LIMIT 10", (user["user_id"],))
+        user["reviews"] = cursor.fetchall()
+    cursor.close()
+    return render_template("admin.html", users=users)
+
+
+
 # ---------- Dashboard (Protected) ----------
 @main.route("/dashboard")
 @jwt_required()
@@ -238,6 +250,3 @@ def logout():
     unset_jwt_cookies(response)
     flash("You have been logged out.", "info")
     return response
-
-
-
