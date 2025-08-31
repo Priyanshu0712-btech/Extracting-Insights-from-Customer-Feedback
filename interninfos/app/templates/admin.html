@@ -5,20 +5,51 @@
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-md-10">
             <div class="card shadow-lg rounded-4">
                 <div class="card-header text-black text-center" style="background-color: #f0f8ff">
                     <h3>Admin Panel</h3>
                 </div>
-                <div class="card-body text-center">
+                <div class="card-body">
                     <div class="alert alert-info alert-dismissible fade show" role="alert">
-                        ⚙️ Welcome to the Admin Panel. Manage your application here.
+                        ⚙ Welcome to the Admin Panel. Below are all users and their reviews.
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
-                    <p class="lead">
-                        <strong>Welcome, Admin! 👋</strong>
-                    </p>
-                </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Reviews</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.user_id }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        {% if user.reviews %}
+                                            <ul class="list-group list-group-flush">
+                                                {% for review in user.reviews %}
+                                                <li class="list-group-item">
+                                                    <span class="fw-bold">{{ review.uploaded_at.strftime('%Y-%m-%d') }}:</span>
+                                                    {{ review.review_text }}
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <span class="text-muted">No reviews</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
