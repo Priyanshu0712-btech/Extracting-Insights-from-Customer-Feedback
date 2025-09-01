@@ -244,9 +244,19 @@ def delete_review(review_id):
 
 
 # ---------- Logout ----------
+
 @main.route("/logout")
 def logout():
+    # ✅ Remove admin flag
+    session.pop("is_admin", None)
+
+    # ✅ Clear old flash messages
+    session.pop('_flashes', None)
+
+    # ✅ Clear JWT cookies
     response = redirect(url_for("main.home"))
     unset_jwt_cookies(response)
+
+    # ✅ Flash only logout message
     flash("You have been logged out.", "info")
     return response
