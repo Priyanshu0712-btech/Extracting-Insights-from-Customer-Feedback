@@ -12,32 +12,47 @@
 </head>
 <body class="d-flex flex-column min-vh-100 text-dark"  style="background-color: #d5ecfd; font-family: poppins, sans-serif;">
 
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background-color: #ffffff;">
+
+  {% block navbar %}
+  <nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background: linear-gradient(90deg, #18132b 80%, #4B0082 100%); font-family: 'Poppins', sans-serif;">
     <div class="container-fluid">
-      <a class="navbar-brand fw-bold text-dark" href="#">ReviewSense</a>
+      <a class="navbar-brand fw-bold text-white" href="{{ url_for('main.home') }}" style="font-size: 1.7rem; letter-spacing: 1px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/1946/1946429.png" alt="Logo" width="32" class="me-2 align-middle">ReviewSense
+      </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
         aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-            <a class="nav-link btn btn-sm btn-light text-dark px-3 rounded-3" href="{{ url_for('main.dashboard') }}">Dashboard</a>
-            <a class="nav-link btn btn-sm btn-light text-dark px-3 rounded-3" href="{{ url_for('main.logout') }}">Logout</a>
+        <ul class="navbar-nav ms-auto align-items-center">
+          <li class="nav-item">
+            <a class="nav-link text-white fw-semibold px-3" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white fw-semibold px-3" href="{{ url_for('main.profile') }}">Profile</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white fw-semibold px-3" href="{{ url_for('main.upload_review') }}">Upload Reviews</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white fw-semibold px-3" href="{{ url_for('main.logout') }}">Logout</a>
+          </li>
         </ul>
       </div>
     </div>
   </nav>
+  {% endblock %}
 
   <!-- Content Block -->
   <main class="container py-5">
     {% block content %}{% endblock %}
   </main>
 
+
   <!-- Sticky Footer -->
-  <footer class="bg-emphasis text-dark text-center py-3 mt-auto" style="background-color: #e7f4fe;">
-  <p class="mb-0">&copy; 2025 ReviewSense. All rights reserved.</p>
-</footer>
+  <footer class="text-center py-3 mt-auto" style="background: linear-gradient(90deg, #18132b 80%, #4B0082 100%); color: #fff; font-family: 'Poppins', sans-serif; letter-spacing: 1px;">
+    <p class="mb-0">&copy; 2025 ReviewSense. All rights reserved.</p>
+  </footer>
 
 
 
