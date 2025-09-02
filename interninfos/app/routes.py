@@ -10,7 +10,7 @@ import io
 import os
 import MySQLdb.cursors
 
-from . import mysql  # initialized in _init_.py
+from . import mysql  # initialized in __init__.py
 
 main = Blueprint('main', __name__, url_prefix="/")
 
@@ -19,10 +19,57 @@ def dict_cursor():
     return mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
 
-# ---------- Home / Login page ----------
+
+# ---------- Home page ----------
 @main.route("/")
 def home():
+    return render_template("home.html")
+
+# ---------- User Login ----------
+@main.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+
+        cursor = dict_cursor()
+        cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
+        user = cursor.fetchone()
+        cursor.close()
+
+        if user and check_password_hash(user["password_hash"], password):
+            access_token = create_access_token(identity=str(user["user_id"]))
+            response = redirect(url_for("main.dashboard"))
+            set_access_cookies(response, access_token)
+            flash("Login successful!", "success")
+            return response
+
+        flash("Invalid email or password.", "danger")
+        return redirect(url_for("main.login"))
+
     return render_template("login.html")
+
+# ---------- Admin Login ----------
+@main.route("/admin_login", methods=["GET", "POST"])
+def admin_login():
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+
+        cursor = dict_cursor()
+        cursor.execute("SELECT * FROM admins WHERE username=%s", (username,))
+        admin = cursor.fetchone()
+        cursor.close()
+
+        if admin and admin["password_hash"] == password:
+            session["is_admin"] = True
+            flash("Admin login successful!", "success")
+            return redirect(url_for("main.admin_dashboard"))
+
+        flash("Invalid admin credentials.", "danger")
+        return redirect(url_for("main.admin_login"))
+
+    return render_template("admin_login.html")
 
 # ---------- Register ----------
 @main.route("/register", methods=["GET", "POST"])
@@ -56,36 +103,6 @@ def register():
 
     return render_template("register.html")
 
-# ---------- Login ----------
-@main.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
-
-        # Permanent admin login (hardcoded)
-        if email == "admin@gmail.com" and password == "admin":
-            session["is_admin"] = True
-            flash("Admin login successful!", "success")
-            return redirect(url_for("main.admin_dashboard"))
-
-        cursor = dict_cursor()
-        cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
-        user = cursor.fetchone()
-        cursor.close()
-
-        if user and check_password_hash(user["password_hash"], password):
-            access_token = create_access_token(identity=str(user["user_id"]))
-            response = redirect(url_for("main.dashboard"))
-            set_access_cookies(response, access_token)
-            flash("Login successful!", "success")
-            return response
-
-        flash("Invalid email or password.", "danger")
-        return redirect(url_for("main.login"))
-
-    # If it's a GET request, just render login page
-    return render_template("login.html")
 # ---------- Admin Dashboard ----------
 @main.route("/admin_dashboard")
 def admin_dashboard():
@@ -244,19 +261,10 @@ def delete_review(review_id):
 
 
 # ---------- Logout ----------
-
 @main.route("/logout")
 def logout():
-    # ✅ Remove admin flag
-    session.pop("is_admin", None)
-
-    # ✅ Clear old flash messages
-    session.pop('_flashes', None)
-
-    # ✅ Clear JWT cookies
     response = redirect(url_for("main.home"))
     unset_jwt_cookies(response)
-
-    # ✅ Flash only logout message
     flash("You have been logged out.", "info")
     return response
+
