@@ -3,7 +3,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background: linear-gradient(90deg, #18132b 80%, #4B0082 100%); font-family: 'Poppins', sans-serif;">
     <div class="container-fluid">
         <a class="navbar-brand fw-bold text-white" href="#" style="font-size: 1.7rem; letter-spacing: 1px;">
-            <img src="https://cdn-icons-png.flaticon.com/512/295/295128.png" alt="Admin" width="32" class="me-2 align-middle">Admin Panel
+            Admin Dashboard
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
             aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,35 +20,59 @@
 </nav>
 {% endblock %}
 
-{% block title %}Admin Panel | ReviewSense{% endblock %}
+{% block title %}Admin Dashboard | ReviewSense{% endblock %}
 
 {% block content %}
-<style>
+
+    <style>
     body {
         font-family: 'Poppins', sans-serif;
-        background: linear-gradient(rgba(7, 4, 21, 0.7), #070415), url('https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=1800&q=80') no-repeat center center/cover;
+        background: linear-gradient(rgba(7, 4, 21, 0.7), #070415), 
+            url('https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=1800&q=80') no-repeat center center/cover;
         color: #c5c1d9;
         min-height: 100vh;
+        display: flex;
+        flex-direction: column;
     }
-    .admin-panel-card {
+
+    /* Sidebar placed below navbar */
+    .sidebar {
+        background: #18132b;
+        position: fixed;
+        top: 56px; /* height of navbar */
+        bottom: 40px; /* leave space for footer */
+        left: 0;
+        width: 220px;
+        padding-top: 20px;
+        overflow-y: auto;
+    }
+
+    .sidebar .nav-link {
+        color: #c5c1d9;
+        font-weight: 500;
+        padding: 12px 20px;
+        display: block;
+    }
+    .sidebar .nav-link.active, .sidebar .nav-link:hover {
+        background: #4B0082;
+        color: #fff;
+        border-radius: 8px;
+    }
+
+    /* Adjust content so it doesn’t go under sidebar */
+    .content-area {
+        margin-left: 240px;
+        padding: 2rem;
+    }
+
+    .card-box {
         background: linear-gradient(145deg, rgba(22, 17, 47, 0.7), rgba(15, 12, 32, 0.8));
         border-radius: 20px;
         box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
         border: 1px solid rgba(138, 43, 226, 0.3);
         padding: 2rem;
-        margin-top: 4rem;
     }
-    .admin-image {
-        width: 100px;
-        margin: 0 auto 1.5rem auto;
-        display: block;
-    }
-    .card-title {
-        font-size: 2rem;
-        color: #fff;
-        text-align: center;
-        margin-bottom: 1.5rem;
-    }
+
     .table {
         background: #18132b;
         color: #fff;
@@ -58,16 +82,26 @@
         color: #fff;
     }
 </style>
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="admin-panel-card">
-                <img src="https://cdn-icons-png.flaticon.com/512/295/295128.png" alt="Admin Panel" class="admin-image">
-                <h2 class="card-title">Admin Panel</h2>
-                <div class="alert alert-info alert-dismissible fade show" role="alert">
-                    ⚙️ Welcome to the Admin Panel. Below are all users and their reviews.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
+
+<div class="sidebar">
+    <nav class="nav flex-column">
+        <a class="nav-link" data-bs-toggle="tab" href="#user-details">👤 User Details</a>
+        <!-- Future menu items -->
+        <!-- <a class="nav-link" data-bs-toggle="tab" href="#reports">📊 Reports</a> -->
+    </nav>
+</div>
+
+<div class="content-area">
+    <div class="tab-content">
+        <!-- Default: Empty -->
+        <div class="tab-pane fade show active" id="blank">
+            <h4 class="text-muted">Please select a menu item from the left.</h4>
+        </div>
+
+        <!-- User Details -->
+        <div class="tab-pane fade" id="user-details">
+            <div class="card-box">
+                <h3 class="text-white mb-3">User Details</h3>
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover align-middle">
                         <thead>
@@ -107,8 +141,17 @@
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Make blank content the default view
+    document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            document.getElementById('blank').classList.remove('show', 'active');
+        });
+    });
+</script>
 {% endblock %}
