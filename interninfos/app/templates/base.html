@@ -62,7 +62,24 @@
   {% if messages %}
     <script>
       {% for message in messages %}
-        alert("{{ message|e }}");
+        // Show a non-blocking popup at top-center
+        const popup = document.createElement("div");
+        popup.innerText = "{{ message|e }}";
+        popup.style.position = "fixed";
+        popup.style.top = "20px";
+        popup.style.left = "50%";
+        popup.style.transform = "translateX(-50%)";
+        popup.style.background = "#28a745";
+        popup.style.color = "white";
+        popup.style.padding = "5px 12px";   // 🔹 smaller height
+        popup.style.borderRadius = "6px";
+        popup.style.fontSize = "0.9rem";    // 🔹 smaller text
+        popup.style.zIndex = "9999";
+        document.body.appendChild(popup);
+
+        setTimeout(() => {
+          popup.remove();
+        }, 4000); // auto-hide after 2s
       {% endfor %}
     </script>
   {% endif %}
