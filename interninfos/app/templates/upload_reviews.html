@@ -3,34 +3,97 @@
 {% block title %}Upload Reviews | ReviewSense{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4">Upload Reviews</h2>
-
-    <div class="card shadow-sm mb-4">
-        <div class="card-header text-dark fw-bold" style="background-color: #f0f8ff">Upload CSV File</div>
-        <div class="card-body">
-            <form method="POST" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label for="file" class="form-label">Choose CSV File</label>
-                    <input type="file" class="form-control" name="file" id="file" accept=".csv">
-                </div>
-                <button type="submit" class="btn btn-primary">Upload</button>
-            </form>
-        </div>
-    </div>
-    
-    <div class="card shadow-sm">
-        <div class="card-header text-dark fw-bold" style="background-color: #f0f8ff">Submit a Review</div>
-        <div class="card-body">
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(rgba(7, 4, 21, 0.7), #070415), url('https://images.unsplash.com/photo-1587620962725-abab7fe55159?auto=format&fit=crop&w=1800&q=80') no-repeat center center/cover;
+    color: #c5c1d9;
+    min-height: 100vh;
+  }
+  .upload-card {
+    background: linear-gradient(145deg, rgba(22, 17, 47, 0.7), rgba(15, 12, 32, 0.8));
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(138, 43, 226, 0.3);
+    padding: 2rem;
+    margin-top: 4rem;
+  }
+  .upload-image {
+    width: 100px;
+    margin: 0 auto 1.5rem auto;
+    display: block;
+  }
+  .card-title {
+    font-size: 2rem;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  .btn {
+    font-family: 'Poppins', sans-serif;
+  }
+  .btn-primary {
+    background: linear-gradient(90deg, #8A2BE2, #4B0082);
+    border: none;
+  }
+  .btn-primary:hover {
+    background: linear-gradient(90deg, #4B0082, #8A2BE2);
+  }
+</style>
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="upload-card">
+        <img src="https://cdn-icons-png.flaticon.com/512/1828/1828919.png" alt="Upload" class="upload-image">
+        <h2 class="card-title">Upload Reviews</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+          {% endif %}
+        {% endwith %}
+        <div class="card mb-4">
+          <div class="card-header bg-secondary text-white">Submit a Review</div>
+          <div class="card-body">
             <form method="POST">
-                <div class="mb-3">
-                    <textarea class="form-control" name="raw_review" rows="4" placeholder="Write your review here..."></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Submit Reviews</button>
+              <div class="mb-3">
+                <textarea class="form-control" name="raw_review" rows="4" placeholder="Write your review here..."></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">Submit Review</button>
             </form>
+          </div>
         </div>
+        <div class="card mb-4">
+          <div class="card-header bg-primary text-white">Upload CSV File</div>
+          <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+              <div class="mb-3">
+                <label for="file" class="form-label">Choose CSV File</label>
+                <input type="file" class="form-control" name="file" id="file" accept=".csv">
+              </div>
+              <button type="submit" class="btn btn-primary">Upload</button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
 
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  setTimeout(() => {
+    let alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+      let bsAlert = new bootstrap.Alert(alert);
+      bsAlert.close();
+    });
+  }, 3000);
+</script>
 {% endblock %}
