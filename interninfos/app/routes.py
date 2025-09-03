@@ -41,13 +41,18 @@ def login():
             access_token = create_access_token(identity=str(user["user_id"]))
             response = redirect(url_for("main.dashboard"))
             set_access_cookies(response, access_token)
+
+            # ✅ Flash after setting cookie
+            session["_flashes"] = []   # clear old flashes
             flash("Login successful!", "success")
             return response
 
+        session["_flashes"] = []
         flash("Invalid email or password.", "danger")
         return redirect(url_for("main.login"))
 
     return render_template("login.html")
+
 
 # ---------- Admin Login ----------
 @main.route("/admin_login", methods=["GET", "POST"])
@@ -62,14 +67,18 @@ def admin_login():
         cursor.close()
 
         if admin and admin["password_hash"] == password:
+            session.clear()
             session["is_admin"] = True
+            session["_flashes"] = []
             flash("Admin login successful!", "success")
             return redirect(url_for("main.admin_dashboard"))
 
+        session["_flashes"] = []
         flash("Invalid admin credentials.", "danger")
         return redirect(url_for("main.admin_login"))
 
     return render_template("admin_login.html")
+
 
 # ---------- Register ----------
 @main.route("/register", methods=["GET", "POST"])
@@ -265,6 +274,6 @@ def delete_review(review_id):
 def logout():
     response = redirect(url_for("main.home"))
     unset_jwt_cookies(response)
-    flash("You have been logged out.", "info")
+   # flash("You have been logged out.", "info")
     return response
 
