@@ -83,6 +83,10 @@ def admin_login():
 # ---------- Register ----------
 @main.route("/register", methods=["GET", "POST"])
 def register():
+    error_username = None
+    error_email = None
+    username = ""
+    email = ""
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         email = request.form.get("email", "").strip().lower()
@@ -93,12 +97,21 @@ def register():
             return redirect(url_for("main.register"))
 
         cursor = dict_cursor()
-        # unique email check
+        # unique check
+        cursor.execute("SELECT user_id FROM users WHERE username=%s", (username,))
+        if cursor.fetchone():
+            error_username = "Username already exists"
         cursor.execute("SELECT user_id FROM users WHERE email=%s", (email,))
         if cursor.fetchone():
-            flash("Email already registered. Please login.", "warning")
+            error_email = "Email already registered"
+
+        if error_username or error_email:
             cursor.close()
-            return redirect(url_for("main.home"))
+            return render_template("register.html",
+                                   error_username=error_username,
+                                   error_email=error_email,
+                                   username=username,
+                                   email=email)
 
         password_hash = generate_password_hash(password)
         cursor.execute(
@@ -169,9 +182,9 @@ def profile():
     cursor.execute("SELECT user_id, username, email FROM users WHERE user_id=%s", (user_id,))
     user = cursor.fetchone()
 
-    # ✅ fetch reviews WITH review_id
+    # fetch reviews WITH review_id
     cursor.execute("""
-        SELECT review_id, review_text, uploaded_at
+        SELECT review_id, review_text, uploaded_at, overall_sentiment, overall_sentiment_score
         FROM reviews
         WHERE user_id=%s
         ORDER BY uploaded_at DESC
@@ -190,60 +203,53 @@ def profile():
 def upload_review():
     user_id = get_jwt_identity()
     if request.method == "POST":
-        # Case 1: Raw review text
         raw_review = (request.form.get("raw_review") or "").strip()
+        file = request.files.get("file")
+        rows = []
+
+        # Case 1: raw text
         if raw_review:
-            cursor = dict_cursor()
-            cursor.execute("""
+            clean_text = preprocess_text(raw_review)
+            result = sentiment_analyzer(clean_text[:512])[0]
+            label, score = result["label"], float(result["score"])
+            rows.append((user_id, raw_review, None, None, datetime.utcnow(), label, score))
+
+        # Case 2: CSV
+        elif file and file.filename.lower().endswith(".csv"):
+            stream = io.StringIO(file.stream.read().decode("utf-8"))
+            reader = csv.DictReader(stream)
+            if "review_text" not in reader.fieldnames:
+                flash("CSV must contain a 'review_text' column.", "danger")
+                return redirect(url_for("main.upload_review"))
+            for row in reader:
+                text = (row.get("review_text") or "").strip()
+                if text:
+                    clean_text = preprocess_text(text)
+                    result = sentiment_analyzer(clean_text[:512])[0]
+                    label, score = result["label"], float(result["score"])
+                    rows.append((user_id, text, None, None, datetime.utcnow(), label, score))
+
+        if rows:
+            cursor = mysql.connection.cursor()
+            cursor.executemany("""
                 INSERT INTO reviews (user_id, review_text, product_id, category, uploaded_at, overall_sentiment, overall_sentiment_score)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, (user_id, raw_review, None, None, datetime.utcnow(), None, None))
+                VALUES (%s,%s,%s,%s,%s,%s,%s)
+            """, rows)
             mysql.connection.commit()
             cursor.close()
-            flash("Review submitted successfully!", "success")
+            flash(f"Uploaded {len(rows)} review(s) with sentiment!", "success")
             return redirect(url_for("main.profile"))
 
-        # Case 2: CSV upload
-        file = request.files.get("file")
-        if file and file.filename.lower().endswith(".csv"):
-            try:
-                stream = io.StringIO(file.stream.read().decode("utf-8"))
-                reader = csv.DictReader(stream)
-                if "review_text" not in reader.fieldnames:
-                    flash("CSV must contain a 'review_text' column.", "danger")
-                    return redirect(url_for("main.upload_review"))
-
-                rows = []
-                for row in reader:
-                    text = (row.get("review_text") or "").strip()
-                    if text:
-                        rows.append((user_id, text, None, None, datetime.utcnow(), None, None))
-
-                if not rows:
-                    flash("No valid reviews found in CSV.", "warning")
-                    return redirect(url_for("main.upload_review"))
-
-                cursor = mysql.connection.cursor()
-                cursor.executemany("""
-                    INSERT INTO reviews (user_id, review_text, product_id, category, uploaded_at, overall_sentiment, overall_sentiment_score)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """, rows)
-                mysql.connection.commit()
-                cursor.close()
-                flash(f"Uploaded {len(rows)} reviews from CSV.", "success")
-            except Exception as e:
-                flash(f"Failed to process CSV: {e}", "danger")
-            return redirect(url_for("main.profile"))
 
         # If neither provided
-        flash("Please provide raw review text", "warning")    #Please provide raw review text or upload a CSV file.
+        flash("Please provide raw review text or upload a CSV.", "warning")
         return redirect(url_for("main.upload_review"))
 
     # GET: show recent uploads for this user
     cursor = dict_cursor()
     cursor.execute("""
-        SELECT review_text, uploaded_at FROM reviews
-        WHERE user_id=%s ORDER BY uploaded_at DESC LIMIT 20
+        SELECT review_text, uploaded_at, overall_sentiment, overall_sentiment_score 
+        FROM reviews WHERE user_id=%s ORDER BY uploaded_at DESC LIMIT 20
     """, (user_id,))
     reviews = cursor.fetchall()
     cursor.close()
@@ -276,4 +282,5 @@ def logout():
     unset_jwt_cookies(response)
    # flash("You have been logged out.", "info")
     return response
+
 
