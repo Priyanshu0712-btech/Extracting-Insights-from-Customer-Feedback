@@ -12,13 +12,38 @@ import MySQLdb.cursors
 
 from . import mysql  # initialized in __init__.py
 
+# NLP + Transformers
+import nltk
+import spacy
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
+from nltk.corpus import stopwords
+
+# Init NLP tools
+nltk.download("stopwords")
+stop_words = set(stopwords.words("english"))
+nlp = spacy.load("en_core_web_sm")
+
+# Load sentiment model (supports Positive / Negative / Neutral)
+MODEL_NAME = "cardiffnlp/twitter-roberta-base-sentiment"
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
+sentiment_analyzer = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
+
+#Sentiment mapping helper
+def map_sentiment(label):
+    if str(label).lower() in ["label_0", "0", "negative"]:
+        return "Negative"
+    elif str(label).lower() in ["label_1", "1", "neutral"]:
+        return "Neutral"
+    elif str(label).lower() in ["label_2", "2", "positive"]:
+        return "Positive"
+    return "Neutral"
+
 main = Blueprint('main', __name__, url_prefix="/")
 
 # ---------- Helpers ----------
 def dict_cursor():
     return mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-
-
 
 # ---------- Home page ----------
 @main.route("/")
@@ -42,8 +67,8 @@ def login():
             response = redirect(url_for("main.dashboard"))
             set_access_cookies(response, access_token)
 
-            # ✅ Flash after setting cookie
-            session["_flashes"] = []   # clear old flashes
+            # Flash after setting cookie
+            session["_flashes"] = []
             flash("Login successful!", "success")
             return response
 
@@ -125,7 +150,7 @@ def register():
 
     return render_template("register.html")
 
-# ---------- Admin Dashboard ----------
+# Admin Dashboard (User Details + Review Analysis)
 @main.route("/admin_dashboard")
 def admin_dashboard():
     if not session.get("is_admin"):
@@ -136,10 +161,18 @@ def admin_dashboard():
     users = cursor.fetchall()
     # For each user, fetch their reviews
     for user in users:
-        cursor.execute("SELECT review_text, uploaded_at FROM reviews WHERE user_id=%s ORDER BY uploaded_at DESC LIMIT 10", (user["user_id"],))
+        cursor.execute("SELECT review_text, uploaded_at FROM reviews WHERE user_id=%s ORDER BY uploaded_at DESC LIMIT 2", (user["user_id"],),)
         user["reviews"] = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT r.review_id, r.review_text, r.uploaded_at, r.overall_sentiment, r.overall_sentiment_score, u.username
+        FROM reviews r JOIN users u ON r.user_id = u.user_id ORDER BY r.uploaded_at DESC LIMIT 100
+    """)
+    reviews = cursor.fetchall()
     cursor.close()
-    return render_template("admin.html", users=users)
+    cursor.close()
+    
+    return render_template("admin.html", users=users,  reviews=reviews)
 
 
 
@@ -209,10 +242,19 @@ def upload_review():
 
         # Case 1: raw text
         if raw_review:
+            cursor = mysql.connection.cursor()
             clean_text = preprocess_text(raw_review)
             result = sentiment_analyzer(clean_text[:512])[0]
             label, score = result["label"], float(result["score"])
-            rows.append((user_id, raw_review, None, None, datetime.utcnow(), label, score))
+            sentiment_label = map_sentiment(label)
+            cursor.execute("""
+                INSERT INTO reviews (user_id, review_text, product_id, category, uploaded_at, overall_sentiment, overall_sentiment_score)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (user_id, raw_review, None, None, datetime.utcnow(), sentiment_label, score))
+            mysql.connection.commit()
+            cursor.close()
+            flash("Review uploaded with sentiment!", "success")
+            return redirect(url_for("main.profile"))
 
         # Case 2: CSV
         elif file and file.filename.lower().endswith(".csv"):
@@ -227,19 +269,19 @@ def upload_review():
                     clean_text = preprocess_text(text)
                     result = sentiment_analyzer(clean_text[:512])[0]
                     label, score = result["label"], float(result["score"])
-                    rows.append((user_id, text, None, None, datetime.utcnow(), label, score))
+                    sentiment_label = map_sentiment(label)
+                    rows.append((user_id, text, None, None, datetime.utcnow(), sentiment_label, score))
 
-        if rows:
-            cursor = mysql.connection.cursor()
-            cursor.executemany("""
-                INSERT INTO reviews (user_id, review_text, product_id, category, uploaded_at, overall_sentiment, overall_sentiment_score)
-                VALUES (%s,%s,%s,%s,%s,%s,%s)
-            """, rows)
-            mysql.connection.commit()
-            cursor.close()
-            flash(f"Uploaded {len(rows)} review(s) with sentiment!", "success")
-            return redirect(url_for("main.profile"))
-
+            if rows:
+                cursor = mysql.connection.cursor()  # Define cursor here before use
+                cursor.executemany("""
+                    INSERT INTO reviews (user_id, review_text, product_id, category, uploaded_at, overall_sentiment, overall_sentiment_score)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s)
+                """, rows)
+                mysql.connection.commit()
+                cursor.close()
+                flash(f"Uploaded {len(rows)} review(s) with sentiment!", "success")
+                return redirect(url_for("main.profile"))
 
         # If neither provided
         flash("Please provide raw review text or upload a CSV.", "warning")
@@ -282,5 +324,6 @@ def logout():
     unset_jwt_cookies(response)
    # flash("You have been logged out.", "info")
     return response
+
 
 
