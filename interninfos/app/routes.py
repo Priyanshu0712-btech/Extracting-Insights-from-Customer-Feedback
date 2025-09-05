@@ -38,6 +38,39 @@ def map_sentiment(label):
     elif str(label).lower() in ["label_2", "2", "positive"]:
         return "Positive"
     return "Neutral"
+# ---------- Text Preprocessing ----------
+import re
+
+def preprocess_text(text: str) -> str:
+    """
+    Clean raw review text before sentiment analysis.
+    - Lowercase
+    - Remove URLs, HTML tags, non-alphanumeric chars
+    - Remove stopwords
+    - Lemmatize with spaCy
+    """
+    if not text:
+        return ""
+
+    # Lowercase
+    text = text.lower()
+
+    # Remove URLs and HTML tags
+    text = re.sub(r"http\S+|www\S+|<.*?>", " ", text)
+
+    # Remove special characters / digits (keep words)
+    text = re.sub(r"[^a-z\s]", " ", text)
+
+    # Tokenize with spaCy
+    doc = nlp(text)
+
+    # Remove stopwords + lemmatize
+    clean_tokens = [
+        token.lemma_ for token in doc 
+        if token.is_alpha and token.text not in stop_words
+    ]
+
+    return " ".join(clean_tokens).strip()
 
 main = Blueprint('main', __name__, url_prefix="/")
 
@@ -80,6 +113,8 @@ def login():
 
 
 # ---------- Admin Login ----------
+from flask_jwt_extended import create_access_token, set_access_cookies
+
 @main.route("/admin_login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
@@ -92,17 +127,17 @@ def admin_login():
         cursor.close()
 
         if admin and admin["password_hash"] == password:
-            session.clear()
-            session["is_admin"] = True
-            session["_flashes"] = []
+            access_token = create_access_token(identity=username, additional_claims={"role": "admin"})
+            resp = redirect(url_for("main.admin_dashboard"))
+            set_access_cookies(resp, access_token)
             flash("Admin login successful!", "success")
-            return redirect(url_for("main.admin_dashboard"))
+            return resp
 
-        session["_flashes"] = []
         flash("Invalid admin credentials.", "danger")
         return redirect(url_for("main.admin_login"))
 
     return render_template("admin_login.html")
+
 
 
 # ---------- Register ----------
@@ -151,28 +186,41 @@ def register():
     return render_template("register.html")
 
 # Admin Dashboard (User Details + Review Analysis)
+from flask_jwt_extended import get_jwt
+
 @main.route("/admin_dashboard")
+@jwt_required()
 def admin_dashboard():
-    if not session.get("is_admin"):
-        flash("Unauthorized access.", "danger")
-        return redirect(url_for("main.login"))
+    claims = get_jwt()
+    if claims.get("role") != "admin":
+        return {"error": "Unauthorized"}, 403
+
+    
     cursor = dict_cursor()
     cursor.execute("SELECT user_id, username, email FROM users ORDER BY user_id")
     users = cursor.fetchall()
-    # For each user, fetch their reviews
+
     for user in users:
-        cursor.execute("SELECT review_text, uploaded_at FROM reviews WHERE user_id=%s ORDER BY uploaded_at DESC LIMIT 2", (user["user_id"],),)
+        cursor.execute("""
+            SELECT review_text, uploaded_at 
+            FROM reviews 
+            WHERE user_id=%s 
+            ORDER BY uploaded_at DESC LIMIT 2
+        """, (user["user_id"],))
         user["reviews"] = cursor.fetchall()
 
     cursor.execute("""
-        SELECT r.review_id, r.review_text, r.uploaded_at, r.overall_sentiment, r.overall_sentiment_score, u.username
-        FROM reviews r JOIN users u ON r.user_id = u.user_id ORDER BY r.uploaded_at DESC LIMIT 100
+        SELECT r.review_id, r.review_text, r.uploaded_at, r.overall_sentiment, 
+               r.overall_sentiment_score, u.username
+        FROM reviews r 
+        JOIN users u ON r.user_id = u.user_id 
+        ORDER BY r.uploaded_at DESC LIMIT 100
     """)
     reviews = cursor.fetchall()
     cursor.close()
-    cursor.close()
     
-    return render_template("admin.html", users=users,  reviews=reviews)
+    return render_template("admin.html", users=users, reviews=reviews)
+
 
 
 
