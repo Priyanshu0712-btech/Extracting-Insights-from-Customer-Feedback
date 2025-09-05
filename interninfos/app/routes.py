@@ -39,6 +39,16 @@ def map_sentiment(label):
         return "Positive"
     return "Neutral"
 
+
+def preprocess_text(text):
+    """Clean review text for analysis"""
+    text = text.lower()
+    text = re.sub(r"[^a-zA-Z\s]", "", text) 
+    doc = nlp(text)
+    tokens = [token.lemma_ for token in doc if token.text not in stop_words]
+    return " ".join(tokens)
+
+
 main = Blueprint('main', __name__, url_prefix="/")
 
 # ---------- Helpers ----------
@@ -324,6 +334,7 @@ def logout():
     unset_jwt_cookies(response)
    # flash("You have been logged out.", "info")
     return response
+
 
 
 
