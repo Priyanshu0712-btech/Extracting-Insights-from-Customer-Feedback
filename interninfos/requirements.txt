@@ -4,3 +4,7 @@ flask-jwt-extended
 pymysql
 python-dotenv
 werkzeug
+nltk
+spacy
+transformers
+torch
