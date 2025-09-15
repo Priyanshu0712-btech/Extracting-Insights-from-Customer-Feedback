@@ -274,7 +274,14 @@ def profile():
     reviews = cursor.fetchall()
     cursor.close()
 
-    return render_template("profile.html", user=user, reviews=reviews)
+    # Calculate sentiment counts for chart
+    sentiment_counts = {'positive': 0, 'negative': 0, 'neutral': 0}
+    for r in reviews:
+        sent = r['overall_sentiment'].lower() if r['overall_sentiment'] else 'neutral'
+        if sent in sentiment_counts:
+            sentiment_counts[sent] += 1
+
+    return render_template("profile.html", user=user, reviews=reviews, sentiment_counts=sentiment_counts)
 
 
 
