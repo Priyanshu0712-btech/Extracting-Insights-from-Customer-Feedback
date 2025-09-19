@@ -10,18 +10,26 @@ import io
 import os
 import MySQLdb.cursors
 
-from . import mysql  # initialized in __init__.py
+from . import mysql  # initialized in init.py
 
 # NLP + Transformers
 import nltk
 import spacy
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
 from nltk.corpus import stopwords
+from nltk.sentiment import SentimentIntensityAnalyzer
 
 # Init NLP tools
 nltk.download("stopwords")
+nltk.download("opinion_lexicon")
+nltk.download("vader_lexicon")
 stop_words = set(stopwords.words("english"))
 nlp = spacy.load("en_core_web_sm")
+
+# Load sentiment lexicon
+from nltk.corpus import opinion_lexicon
+positive_words = set(opinion_lexicon.positive())
+negative_words = set(opinion_lexicon.negative())
 
 # Load sentiment model (supports Positive / Negative / Neutral)
 MODEL_NAME = "cardiffnlp/twitter-roberta-base-sentiment"
@@ -29,15 +37,66 @@ tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
 sentiment_analyzer = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
 
-#Sentiment mapping helper
-def map_sentiment(label):
-    if str(label).lower() in ["label_0", "0", "negative"]:
-        return "Negative"
-    elif str(label).lower() in ["label_1", "1", "neutral"]:
-        return "Neutral"
-    elif str(label).lower() in ["label_2", "2", "positive"]:
-        return "Positive"
-    return "Neutral"
+# Load irony/sarcasm detection model
+MODEL_IRONY = "cardiffnlp/twitter-roberta-base-irony"
+irony_analyzer = pipeline("text-classification", model=MODEL_IRONY)
+
+#Sentiment mapping helper with irony adjustment
+def map_sentiment(label, irony_label=None, irony_score=0.0):
+    base_sentiment = "Neutral"
+    if str(label).lower() in ["label_2", "positive"]:
+        base_sentiment = "Positive"
+    elif str(label).lower() in ["label_1", "neutral"]:
+        base_sentiment = "Neutral"
+    elif str(label).lower() in ["label_0", "negative"]:
+        base_sentiment = "Negative"
+
+    # Adjust for irony/sarcasm
+    if irony_label == "LABEL_1" and irony_score > 0.5:
+        if base_sentiment == "Positive":
+            return "Negative"
+        elif base_sentiment == "Negative":
+            return "Positive"
+    return base_sentiment
+
+# Keyword highlighting helper - Highlight sentiment-bearing words from lexicon
+def highlight_keywords(text, sentiment):
+    if not text:
+        return text
+
+    # Process text with spaCy for tokenization
+    doc = nlp(text)
+
+    highlighted_words = []
+    for token in doc:
+        word = token.text
+        lemma = token.lemma_.lower()
+
+        # Skip punctuation and spaces
+        if token.is_punct or token.is_space:
+            highlighted_words.append(word)
+            continue
+
+        should_highlight = False
+        highlight_color = ""
+
+        if sentiment == "Positive" and lemma in positive_words:
+            should_highlight = True
+            highlight_color = "lightgreen"
+        elif sentiment == "Negative" and lemma in negative_words:
+            should_highlight = True
+            highlight_color = "lightcoral"
+        # For neutral, no highlighting or highlight neutral words if needed
+        # elif sentiment == "Neutral":
+        #     should_highlight = True
+        #     highlight_color = "lightyellow"
+
+        if should_highlight:
+            highlighted_words.append(f'<span style="background-color: {highlight_color};">{word}</span>')
+        else:
+            highlighted_words.append(word)
+
+    return " ".join(highlighted_words)
 # ---------- Text Preprocessing ----------
 import re
 
@@ -202,24 +261,39 @@ def admin_dashboard():
 
     for user in users:
         cursor.execute("""
-            SELECT review_text, uploaded_at 
-            FROM reviews 
-            WHERE user_id=%s 
+            SELECT review_text, uploaded_at, overall_sentiment
+            FROM reviews
+            WHERE user_id=%s
             ORDER BY uploaded_at DESC LIMIT 2
         """, (user["user_id"],))
-        user["reviews"] = cursor.fetchall()
+        user_reviews = cursor.fetchall()
+        for r in user_reviews:
+            r['highlighted_text'] = highlight_keywords(r['review_text'], r['overall_sentiment'])
+        user["reviews"] = user_reviews
 
     cursor.execute("""
-        SELECT r.review_id, r.review_text, r.uploaded_at, r.overall_sentiment, 
+        SELECT r.review_id, r.review_text, r.uploaded_at, r.overall_sentiment,
                r.overall_sentiment_score, u.username
-        FROM reviews r 
-        JOIN users u ON r.user_id = u.user_id 
+        FROM reviews r
+        JOIN users u ON r.user_id = u.user_id
         ORDER BY r.uploaded_at DESC LIMIT 100
     """)
     reviews = cursor.fetchall()
+
+    # Add highlighted text
+    for r in reviews:
+        r['highlighted_text'] = highlight_keywords(r['review_text'], r['overall_sentiment'])
+
+    # Calculate sentiment counts for all reviews
+    sentiment_counts = {'positive': 0, 'negative': 0, 'neutral': 0}
+    for r in reviews:
+        sent = r['overall_sentiment'].lower() if r['overall_sentiment'] else 'neutral'
+        if sent in sentiment_counts:
+            sentiment_counts[sent] += 1
+
     cursor.close()
-    
-    return render_template("admin.html", users=users, reviews=reviews)
+
+    return render_template("admin.html", users=users, reviews=reviews, sentiment_counts=sentiment_counts)
 
 
 
@@ -274,6 +348,10 @@ def profile():
     reviews = cursor.fetchall()
     cursor.close()
 
+    # Add highlighted text
+    for r in reviews:
+        r['highlighted_text'] = highlight_keywords(r['review_text'], r['overall_sentiment'])
+
     # Calculate sentiment counts for chart
     sentiment_counts = {'positive': 0, 'negative': 0, 'neutral': 0}
     for r in reviews:
@@ -298,14 +376,16 @@ def upload_review():
         # Case 1: raw text
         if raw_review:
             cursor = mysql.connection.cursor()
-            clean_text = preprocess_text(raw_review)
-            result = sentiment_analyzer(clean_text[:512])[0]
-            label, score = result["label"], float(result["score"])
-            sentiment_label = map_sentiment(label)
+            # Analyze sentiment and irony
+            sent_result = sentiment_analyzer(raw_review[:512])[0]
+            sent_label, sent_score = sent_result["label"], float(sent_result["score"])
+            irony_result = irony_analyzer(raw_review[:512])[0]
+            irony_label, irony_score = irony_result["label"], float(irony_result["score"])
+            sentiment_label = map_sentiment(sent_label, irony_label, irony_score)
             cursor.execute("""
                 INSERT INTO reviews (user_id, review_text, product_id, category, uploaded_at, overall_sentiment, overall_sentiment_score)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, (user_id, raw_review, None, None, datetime.utcnow(), sentiment_label, score))
+            """, (user_id, raw_review, None, None, datetime.utcnow(), sentiment_label, sent_score))
             mysql.connection.commit()
             cursor.close()
             flash("Review uploaded with sentiment!", "success")
@@ -321,11 +401,13 @@ def upload_review():
             for row in reader:
                 text = (row.get("review_text") or "").strip()
                 if text:
-                    clean_text = preprocess_text(text)
-                    result = sentiment_analyzer(clean_text[:512])[0]
-                    label, score = result["label"], float(result["score"])
-                    sentiment_label = map_sentiment(label)
-                    rows.append((user_id, text, None, None, datetime.utcnow(), sentiment_label, score))
+                    # Analyze sentiment and irony
+                    sent_result = sentiment_analyzer(text[:512])[0]
+                    sent_label, sent_score = sent_result["label"], float(sent_result["score"])
+                    irony_result = irony_analyzer(text[:512])[0]
+                    irony_label, irony_score = irony_result["label"], float(irony_result["score"])
+                    sentiment_label = map_sentiment(sent_label, irony_label, irony_score)
+                    rows.append((user_id, text, None, None, datetime.utcnow(), sentiment_label, sent_score))
 
             if rows:
                 cursor = mysql.connection.cursor()  # Define cursor here before use
@@ -377,8 +459,9 @@ def delete_review(review_id):
 def logout():
     response = redirect(url_for("main.home"))
     unset_jwt_cookies(response)
-   # flash("You have been logged out.", "info")
+    # flash("You have been logged out.", "info")
     return response
+
 
 
 
