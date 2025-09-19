@@ -6,55 +6,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 {% endblock %}
 
-{% block navbar %}
-<nav
-  class="navbar navbar-expand-lg navbar-dark shadow-sm"
-  style="
-    background: linear-gradient(90deg, #18132b 80%, #4b0082 100%);
-    font-family: 'Poppins', sans-serif;
-  "
->
-  <div class="container-fluid">
-    <a
-      class="navbar-brand fw-bold text-white"
-      href="#"
-      style="font-size: 1.7rem; letter-spacing: 1px"
-    >
-      User Profile
-    </a>
-    <button
-      class="navbar-toggler"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#navbarNav"
-      aria-controls="navbarNav"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto align-items-center">
-        <li class="nav-item">
-          <a
-            class="nav-link text-white fw-semibold px-3"
-            href="{{ url_for('main.dashboard') }}"
-            >Dashboard</a
-          >
-        </li>
-        <li class="nav-item">
-          <a
-            class="nav-link text-white fw-semibold px-3"
-            href="{{ url_for('main.logout') }}"
-            >Logout</a
-          >
-        </li>
-      </ul>
-    </div>
-  </div>
-</nav>
-{% endblock %}
-
 {% block content %}
 <style>
   body {
@@ -251,7 +202,7 @@
                 </div>
               </div>
               <button class="btn btn-primary mt-4" type="submit" disabled>Save Changes</button>
-              <button id="editProfileBtn" type="button" class="btn mt-4 ms-2" style="background-color: blue; color: white;">Edit</button>
+              <button id="editProfileBtn" type="button" class="btn mt-4 ms-2 btn-primary">Edit</button>
             </form>
             <script>
               document.addEventListener('DOMContentLoaded', function() {
@@ -432,6 +383,38 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 </div>
+
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+  const filterSelect = document.getElementById('reviewFilterSelect');
+  const reviewCards = Array.from(document.querySelectorAll('.review-card'));
+  const reviewContainer = document.querySelector('.left-panel');
+
+  filterSelect.addEventListener('change', function() {
+    const filter = this.value;
+
+    reviewCards.forEach(card => card.style.display = "block");
+
+    if (filter === "positive" || filter === "negative" || filter === "neutral") {
+      reviewCards.forEach(card => {
+        const sentiment = card.getAttribute("data-review-sentiment");
+        if (sentiment !== filter) {
+          card.style.display = "none";
+        }
+      });
+    } 
+    else if (filter === "newest" || filter === "oldest") {
+      const sortedCards = reviewCards.sort((a, b) => {
+        const dateA = new Date(a.querySelector("small.text-muted").innerText);
+        const dateB = new Date(b.querySelector("small.text-muted").innerText);
+        return filter === "newest" ? dateB - dateA : dateA - dateB;
+      });
+
+      sortedCards.forEach(card => reviewContainer.appendChild(card));
+    }
+  });
+});
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
