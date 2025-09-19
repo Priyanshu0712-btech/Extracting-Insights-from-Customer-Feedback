@@ -3,7 +3,59 @@
 {% block title %}User Profile | ReviewSense{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
 
+{% block navbar %}
+<nav
+  class="navbar navbar-expand-lg navbar-dark shadow-sm"
+  style="
+    background: linear-gradient(90deg, #18132b 80%, #4b0082 100%);
+    font-family: 'Poppins', sans-serif;
+  "
+>
+  <div class="container-fluid">
+    <a
+      class="navbar-brand fw-bold text-white"
+      href="#"
+      style="font-size: 1.7rem; letter-spacing: 1px"
+    >
+      User Profile
+    </a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+      aria-controls="navbarNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto align-items-center">
+        <li class="nav-item">
+          <a
+            class="nav-link text-white fw-semibold px-3"
+            href="{{ url_for('main.dashboard') }}"
+            >Dashboard</a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link text-white fw-semibold px-3"
+            href="{{ url_for('main.logout') }}"
+            >Logout</a
+          >
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
 <style>
   body {
     font-family: "Poppins", sans-serif;
@@ -199,7 +251,7 @@
                 </div>
               </div>
               <button class="btn btn-primary mt-4" type="submit" disabled>Save Changes</button>
-              <button id="editProfileBtn" type="button" class="btn btn-secondary mt-4 ms-2">Edit</button>
+              <button id="editProfileBtn" type="button" class="btn mt-4 ms-2" style="background-color: blue; color: white;">Edit</button>
             </form>
             <script>
               document.addEventListener('DOMContentLoaded', function() {
@@ -227,10 +279,22 @@
               <div class="left-panel">
                 <h2 class="analyzed-title">My Analyzed Reviews ({{ reviews|length }})</h2>
 
+                <!-- Filter dropdown -->
+                <div class="mb-3">
+                  <select id="reviewFilterSelect" class="form-select">
+                    <option value="">All Reviews</option>
+                    <option value="positive">Only Positive Reviews</option>
+                    <option value="negative">Only Negative Reviews</option>
+                    <option value="neutral">Only Neutral Reviews</option>
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                  </select>
+                </div>
+
                 {% if reviews %}
                   {% for review in reviews %}
-                  <div class="review-card">
-                    <div class="review-text">"{{ review.review_text }}"</div>
+                  <div class="review-card" data-review-text="{{ review.review_text|lower }}" data-review-sentiment="{{ review.overall_sentiment|lower if review.overall_sentiment else '' }}">
+                    <div class="review-text">"{{ review.highlighted_text | safe }}"</div>
                     {% if loop.first %}
                     <div class="review-steps">
                       <span>Original</span>
@@ -334,38 +398,31 @@ document.addEventListener('DOMContentLoaded', function() {
     console.error('Error initializing sentiment chart:', error);
   }
   {% else %}
-  // Fallback static chart for debugging
+  // No reviews - show neutral state
   try {
-    console.log("No reviews data found, rendering fallback chart.");
+    console.log("No reviews data found, showing empty chart.");
     const ctx = document.getElementById('sentimentChart').getContext('2d');
     window.sentimentChart = new Chart(ctx, {
       type: 'pie',
       data: {
-        labels: ['Positive', 'Negative', 'Neutral'],
+        labels: [],
         datasets: [{
-          data: [5, 3, 2],
-          backgroundColor: [
-            '#22c55e',
-            '#dc3545',
-            '#facc15'
-          ],
-          borderWidth: 1
+          data: [],
+          backgroundColor: [],
+          borderWidth: 0
         }]
       },
       options: {
         responsive: true,
         plugins: {
           legend: {
-            position: 'bottom',
-            labels: {
-              color: '#333'
-            }
+            display: false
           }
         }
       }
     });
   } catch (error) {
-    console.error('Error initializing fallback sentiment chart:', error);
+    console.error('Error initializing empty sentiment chart:', error);
   }
   {% endif %}
 });
