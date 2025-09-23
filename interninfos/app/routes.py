@@ -9,8 +9,10 @@ import csv
 import io
 import os
 import MySQLdb.cursors
+from markupsafe import Markup
 
 from . import mysql  # initialized in init.py
+from . import absa
 
 # NLP + Transformers
 import nltk
@@ -67,36 +69,33 @@ def highlight_keywords(text, sentiment):
     # Process text with spaCy for tokenization
     doc = nlp(text)
 
-    highlighted_words = []
+    parts = []
     for token in doc:
         word = token.text
+        ws = token.whitespace_
         lemma = token.lemma_.lower()
 
-        # Skip punctuation and spaces
+        # Keep punctuation and spaces as-is
         if token.is_punct or token.is_space:
-            highlighted_words.append(word)
+            parts.append(word + ws)
             continue
 
         should_highlight = False
-        highlight_color = ""
+        highlight_class = ""
 
         if sentiment == "Positive" and lemma in positive_words:
             should_highlight = True
-            highlight_color = "lightgreen"
+            highlight_class = "positive-sentiment"
         elif sentiment == "Negative" and lemma in negative_words:
             should_highlight = True
-            highlight_color = "lightcoral"
-        # For neutral, no highlighting or highlight neutral words if needed
-        # elif sentiment == "Neutral":
-        #     should_highlight = True
-        #     highlight_color = "lightyellow"
+            highlight_class = "negative-sentiment"
 
         if should_highlight:
-            highlighted_words.append(f'<span style="background-color: {highlight_color};">{word}</span>')
+            parts.append(f'<span class="{highlight_class}">{word}</span>' + ws)
         else:
-            highlighted_words.append(word)
+            parts.append(word + ws)
 
-    return " ".join(highlighted_words)
+    return "".join(parts)
 # ---------- Text Preprocessing ----------
 import re
 
@@ -303,6 +302,11 @@ def admin_dashboard():
 @jwt_required()
 def dashboard():
     user_id = get_jwt_identity()
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for("main.home"))
     cursor = dict_cursor()
     cursor.execute("SELECT user_id, username, email FROM users WHERE user_id=%s", (user_id,))
     user = cursor.fetchone()
@@ -316,6 +320,11 @@ def dashboard():
 @jwt_required()
 def profile():
     user_id = get_jwt_identity()
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for("main.home"))
     cursor = dict_cursor()
 
     if request.method == "POST":
@@ -359,7 +368,53 @@ def profile():
         if sent in sentiment_counts:
             sentiment_counts[sent] += 1
 
-    return render_template("profile.html", user=user, reviews=reviews, sentiment_counts=sentiment_counts)
+    # Aspect-based analysis
+    review_texts = [r['review_text'] for r in reviews if r.get('review_text')]
+    aggregated, details = absa.analyze_reviews(review_texts)
+    if hasattr(aggregated, 'to_dict'):
+        agg_list = aggregated.to_dict(orient='records')
+    else:
+        agg_list = aggregated
+
+    # Add highlighting in stable order: first sentiment spans, then aspect bold spans
+    for r in reviews:
+        base_text = r['review_text'] or ''
+        # 1) sentiment highlighting
+        with_sentiment = highlight_keywords(base_text, r['overall_sentiment'])
+        # 2) aspect bold (span)
+        with_aspects = absa.highlight_aspects(with_sentiment)
+        r['combined_highlighted'] = Markup(with_aspects)
+
+    return render_template("profile.html", user=user, reviews=reviews, sentiment_counts=sentiment_counts, aggregated=agg_list)
+
+
+
+# ---------- Aspect-based Sentiment Analysis (ABSA) View ----------
+@main.route("/analysis")
+@jwt_required()
+def analysis():
+    user_id = get_jwt_identity()
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for("main.home"))
+    cursor = dict_cursor()
+    cursor.execute("SELECT review_text FROM reviews WHERE user_id=%s ORDER BY uploaded_at DESC LIMIT 500", (user_id,))
+    rows = cursor.fetchall()
+    cursor.close()
+
+    reviews = [r['review_text'] for r in rows if r.get('review_text')]
+
+    aggregated, details = absa.analyze_reviews(reviews)
+
+    # If pandas DataFrame returned, convert to records for templating
+    if hasattr(aggregated, 'to_dict'):
+        agg_list = aggregated.to_dict(orient='records')
+    else:
+        agg_list = aggregated
+
+    return render_template('analysis.html', aggregated=agg_list, details=details)
 
 
 
@@ -368,6 +423,11 @@ def profile():
 @jwt_required()
 def upload_review():
     user_id = get_jwt_identity()
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for("main.home"))
     if request.method == "POST":
         raw_review = (request.form.get("raw_review") or "").strip()
         file = request.files.get("file")
@@ -440,6 +500,11 @@ def upload_review():
 @jwt_required()
 def delete_review(review_id):
     user_id = get_jwt_identity()
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for("main.home"))
     cursor = mysql.connection.cursor()
     cursor.execute("DELETE FROM reviews WHERE review_id=%s AND user_id=%s", (review_id, user_id))
     deleted = cursor.rowcount
