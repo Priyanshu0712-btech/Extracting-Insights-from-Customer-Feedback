@@ -151,4 +151,5 @@ def highlight_aspects(text: str) -> str:
     highlighted = text
     for aspect, pattern in _ASPECT_PATTERN.items():
         highlighted = pattern.sub(lambda m: f"<span class=\"aspect-highlight\">{m.group()}</span>", highlighted)
+
     return highlighted
