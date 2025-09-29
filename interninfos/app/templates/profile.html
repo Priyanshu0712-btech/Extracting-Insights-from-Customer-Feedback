@@ -269,6 +269,53 @@
           </div>
         </div>
       </div>
+      <!-- My Reviews Tab -->
+    <div class="tab-pane fade show active" id="my-reviews">
+      <div class="card-box">
+        <h3 class="text-white mb-3">My Reviews ({{ reviews|length }})</h3>
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Review</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for review in reviews %}
+              <tr>
+                <!-- Date -->
+                <td>{{ review.uploaded_at.strftime("%b %d, %Y") }}</td>
+
+                <td>{{ review.review_text }}</td>
+
+                <td>
+
+                  <!-- Delete button -->
+                  <form
+                    method="POST"
+                    action="{{ url_for('main.delete_review', review_id=review.review_id) }}"
+                    style="display: inline"
+                  >
+                    <button
+                      class="btn btn-danger btn-sm"
+                      type="submit"
+                      onclick="return confirm('Delete this review?');"
+                    >
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     </div>
 
     <!-- Analyze Reviews Tab -->
@@ -431,52 +478,6 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </div>
 
-<!-- My Reviews Tab -->
-    <div class="tab-pane fade show active" id="my-reviews">
-      <div class="card-box">
-        <h3 class="text-white mb-3">My Reviews ({{ reviews|length }})</h3>
-        <div class="table-responsive">
-          <table class="table table-bordered table-hover align-middle">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Review</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for review in reviews %}
-              <tr>
-                <!-- Date -->
-                <td>{{ review.uploaded_at.strftime("%b %d, %Y") }}</td>
-
-                <td>{{ review.review_text }}</td>
-
-                <td>
-
-                  <!-- Delete button -->
-                  <form
-                    method="POST"
-                    action="{{ url_for('main.delete_review', review_id=review.review_id) }}"
-                    style="display: inline"
-                  >
-                    <button
-                      class="btn btn-danger btn-sm"
-                      type="submit"
-                      onclick="return confirm('Delete this review?');"
-                    >
-                      <i class="fas fa-trash-alt"></i>
-                    </button>
-                  </form>
-                </td>
-              </tr>
-
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
 
 <!-- Detailed Analysis Modal -->
 <div class="modal fade" id="analysisModal" tabindex="-1" aria-labelledby="analysisModalLabel" aria-hidden="true">
