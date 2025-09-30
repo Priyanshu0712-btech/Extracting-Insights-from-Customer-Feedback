@@ -388,3 +388,25 @@ def review_analysis(review_id):
         'aspect_sentiments': analysis_result['aspect_sentiments'],
         'summary': analysis_result['summary']
     }
+
+# -------- Delete User account --------
+@main.route("/delete_user/<int:user_id>", methods=["POST"])
+@jwt_required()
+def delete_user(user_id):
+    claims = get_jwt()
+    if claims.get("role") != "admin":
+        return {"error": "Unauthorized"}, 403
+
+    cursor = mysql.connection.cursor()
+    # First delete user's reviews (to prevent orphaned data)
+    cursor.execute("DELETE FROM reviews WHERE user_id=%s", (user_id,))
+    cursor.execute("DELETE FROM users WHERE user_id=%s", (user_id,))
+    deleted = cursor.rowcount
+    mysql.connection.commit()
+    cursor.close()
+
+    if deleted:
+        flash("User and all their reviews deleted successfully!", "success")
+    else:
+        flash("Could not delete that user.", "danger")
+    return redirect(url_for("main.admin_dashboard"))
