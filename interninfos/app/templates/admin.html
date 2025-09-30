@@ -272,6 +272,7 @@
                 <th>Username</th>
                 <th>Email</th>
                 <th>Reviews</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -292,6 +293,42 @@
                   {% else %}
                   <span class="text-muted">No reviews</span>
                   {% endif %}
+
+                  <!-- Button to view all reviews -->
+                  {% if user.reviews %}
+                  <ul class="list-group list-group-flush">
+                    {% for review in user.reviews %}
+                    <li class="list-group-item">
+                      <span class="fw-bold">{{ review.uploaded_at }}</span>: {{
+                      review.highlighted_text | safe }}
+                    </li>
+                    {% endfor %}
+                  </ul>
+                  <!-- Button to view all reviews -->
+                  {% if user.reviews %}
+                  <a
+                    href="#"
+                    class="btn btn-info mt-2 btn-sm"
+                  >
+                    View All Reviews
+                  </a>
+                  {% endif %} {% else %}
+                  <span class="text-muted">No reviews</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <!-- Button to delete user -->
+                  <form
+                    method="POST"
+                    action="{{ url_for('main.delete_user', user_id=user.user_id) }}"
+                    style="display: inline"
+                    onsubmit="return confirm('Are you sure you want to delete this user profile?');"
+                  >
+                    <button type="submit" class="btn btn-danger btn-sm">
+                      Delete User
+                    </button>
+                  </form>
+                  
                 </td>
               </tr>
               {% endfor %}
@@ -498,5 +535,6 @@
   });
 </script>
 {% endblock %}
+
 
 
