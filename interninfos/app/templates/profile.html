@@ -12,6 +12,10 @@
   style="
     background: linear-gradient(90deg, #18132b 80%, #4b0082 100%);
     font-family: 'Poppins', sans-serif;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1030;
   "
 >
   <div class="container-fluid">
@@ -73,17 +77,31 @@
     background: #18132b;
     position: fixed;
     top: 56px;
-    bottom: 40px;
+    bottom: 0;
     left: 0;
     width: 220px;
+    min-width: 220px;
+    max-width: 220px;
     padding-top: 20px;
     overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+  .sidebar .nav {
+    width: 200px;
+    padding: 0;
+    margin: 0;
   }
   .sidebar .nav-link {
     color: #c5c1d9;
     font-weight: 500;
-    padding: 12px 20px;
+    padding: 12px 10px;
     display: block;
+    width: 220px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .sidebar .nav-link.active,
   .sidebar .nav-link:hover {
@@ -92,10 +110,60 @@
     border-radius: 8px;
   }
 
-  .content-area {
-    margin-left: 240px;
-    padding: 2rem;
+  /* Override body background for full screen with dark background */
+  body {
+    background: #18132b !important;
+    overflow-x: hidden;
   }
+
+ /* Override content area for full screen with dark background */
+  .content-area {
+    margin-left: 120px !important;
+    padding: 5px 10px 10px 10px !important;
+    width: calc(100vw - 200px) !important;
+    max-width: 1310px !important;
+    height: 100vh !important;
+    background: #1e1a3a !important;
+    overflow-x: hidden !important;
+  } 
+
+
+  #analyze-reviews .left-panel {
+    flex: 2;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding-right: 10px;
+    position: relative;
+  }
+
+  #analyze-reviews .right-panel {
+    flex: 1.2;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: fit-content;
+  }
+
+  #analyze-reviews .right-panel {
+    flex: 1;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: fit-content;
+  }
+  /* Update Profile Tab */
+ /* <div class="tab-pane fade" id="update-profile">
+    <div class="card-box">
+      <h3 class="text-white mb-3">Update Profile</h3>
+      <div class="row justify-content-center">
+        <div class="col-md-8">*/
+
+  /* Update Profile Tab */
+  <div class="tab-pane fade" id="update-profile">
+    <div class="card-box" style="max-width: 900px; margin: 0 auto;">
+      <h3 class="text-white mb-3">Update Profile</h3>
+      <div class="row justify-content-center">
+        <div class="col-md-8">
 
   .card-box {
     background: linear-gradient(
@@ -107,15 +175,56 @@
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
     border: 1px solid rgba(138, 43, 226, 0.3);
     padding: 2rem;
-  }
+}
+
 
   .table {
     background: #18132b;
     color: #fff;
+    border-collapse: separate;
+    border-spacing: 0 8px;
   }
   .table thead {
     background: #4b0082;
     color: #fff;
+  }
+  .table tbody tr {
+    background: rgba(75, 0, 130, 0.1);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  .table tbody tr:hover {
+    background: rgba(75, 0, 130, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  .table td {
+    padding: 16px 12px;
+    border: none;
+    vertical-align: middle;
+  }
+  .table th {
+    padding: 12px;
+    border: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+  }
+  .review-text-cell {
+    max-width: 400px;
+    word-wrap: break-word;
+    line-height: 1.5;
+  }
+  .date-cell {
+    font-weight: 500;
+    color: #c5c1d9;
+    min-width: 100px;
+  }
+  .action-cell {
+    min-width: 80px;
+    text-align: center;
   }
 
   /* Analyze Reviews Section */
@@ -215,17 +324,223 @@
     margin-bottom: 7px;
   }
 
+  /* Modern Filter UI */
+  .filter-container {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e1e8f0;
+    margin-bottom: 15px;
+  }
+
+  .filter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .filter-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1a202c;
+    margin: 0;
+  }
+
+  .filter-count {
+    font-size: 0.8rem;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 8px;
+  }
+
+  .filter-buttons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .filter-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .btn-check {
+    display: none;
+  }
+
+  .btn-outline-primary {
+    border-color: #4299e1;
+    color: #4299e1;
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+
+  .btn-outline-primary:hover {
+    background: #4299e1;
+    border-color: #4299e1;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(66, 153, 225, 0.3);
+  }
+
+  .btn-outline-success {
+    border-color: #22c55e;
+    color: #22c55e;
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+
+  .btn-outline-success:hover {
+    background: #22c55e;
+    border-color: #22c55e;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+  }
+
+  .btn-outline-danger {
+    border-color: #dc3545;
+    color: #dc3545;
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+
+  .btn-outline-danger:hover {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+  }
+
+  .btn-outline-warning {
+    border-color: #f59e0b;
+    color: #f59e0b;
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+
+  .btn-outline-warning:hover {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+  }
+
+  .btn-outline-info {
+    border-color: #06b6d4;
+    color: #06b6d4;
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+
+  .btn-outline-info:hover {
+    background: #06b6d4;
+    border-color: #06b6d4;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(6, 182, 212, 0.3);
+  }
+
+  .btn-check:checked + .btn-outline-primary {
+    background: #4299e1;
+    border-color: #4299e1;
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(66, 153, 225, 0.25);
+  }
+
+  .btn-check:checked + .btn-outline-success {
+    background: #22c55e;
+    border-color: #22c55e;
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.25);
+  }
+
+  .btn-check:checked + .btn-outline-danger {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+  }
+
+  .btn-check:checked + .btn-outline-warning {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(245, 158, 11, 0.25);
+  }
+
+  .btn-check:checked + .btn-outline-info {
+    background: #06b6d4;
+    border-color: #06b6d4;
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(6, 182, 212, 0.25);
+  }
+
+  .filter-stats {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #e1e8f0;
+    text-align: center;
+  }
+
+  .filtered-count {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+
   /* Mobile responsive */
   @media (max-width: 900px) {
     #analyze-reviews .main-content { flex-direction: column; }
     #analyze-reviews .right-panel { margin-top: 18px; }
+
+    .filter-buttons {
+      gap: 12px;
+    }
+
+    .btn-group {
+      justify-content: center;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 80px;
+    }
   }
 </style>
 
+<!-- Sidebar -->
 <div class="sidebar">
   <nav class="nav flex-column">
-    <a class="nav-link" data-bs-toggle="tab" href="#update-profile">👤 Update Profile</a>
-    <a class="nav-link active" data-bs-toggle="tab" href="#analyze-reviews">📊 Analyze My Reviews</a>
+    <a class="nav-link" href="#update-profile" data-bs-toggle="tab">
+      <i class="fas fa-user me-2"></i>Update Profile
+    </a>
+    <a class="nav-link active" href="#analyze-reviews" data-bs-toggle="tab">
+      <i class="fas fa-chart-line me-2"></i>Analyze Reviews
+    </a>
   </nav>
 </div>
 
@@ -234,7 +549,7 @@
     <!-- Update Profile Tab -->
     <div class="tab-pane fade" id="update-profile">
       <div class="card-box">
-        <h3 class="text-white mb-3">Update Profile</h3>
+        <h3 class="text-white mb-3"></h3>
         <div class="row justify-content-center">
           <div class="col-md-8">
             <img src="https://cdn-icons-png.flaticon.com/512/1946/1946429.png" alt="Profile" class="d-block mx-auto mb-4" style="width: 100px;">
@@ -253,7 +568,9 @@
               <button class="btn btn-primary mt-4" type="submit" disabled>Save Changes</button>
               <button id="editProfileBtn" type="button" class="btn mt-4 ms-2" style="background-color: blue; color: white;">Edit</button>
             </form>
-            <script>
+
+
+        <script>
               document.addEventListener('DOMContentLoaded', function() {
                 const editBtn = document.getElementById('editProfileBtn');
                 const form = editBtn.closest('form');
@@ -266,60 +583,47 @@
                 });
               });
             </script>
+
+            <!-- Display Reviews in Table Format -->
+            <h5 class="text-white mt-5">Your Reviews</h5>
+            {% if reviews %}
+              <div class="table-responsive">
+                <table class="table table-dark table-striped">
+                  <thead>
+                    <tr>
+                      <th scope="col">Date</th>
+                      <th scope="col">Review</th>
+                      <th scope="col">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for review in reviews %}
+                      <tr>
+                        <td class="date-cell">{{ review.uploaded_at.strftime("%b %d, %Y") }}</td>
+                        <td class="review-text-cell">{{ review.review_text }}</td>
+                        <td class="action-cell">
+                          <form method="POST" action="{{ url_for('main.delete_review', review_id=review.review_id) }}" style="display: inline;">
+                            <button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('Are you sure you want to delete this review?');" title="Delete Review">
+                              <i class="fas fa-trash-alt me-1"></i>
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="text-white">No reviews yet.</p>
+            {% endif %}
           </div>
         </div>
       </div>
-      <!-- My Reviews Tab -->
-    <div class="tab-pane fade show active" id="my-reviews">
-      <div class="card-box">
-        <h3 class="text-white mb-3">My Reviews ({{ reviews|length }})</h3>
-        <div class="table-responsive">
-          <table class="table table-bordered table-hover align-middle">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Review</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for review in reviews %}
-              <tr>
-                <!-- Date -->
-                <td>{{ review.uploaded_at.strftime("%b %d, %Y") }}</td>
-
-                <td>{{ review.review_text }}</td>
-
-                <td>
-
-                  <!-- Delete button -->
-                  <form
-                    method="POST"
-                    action="{{ url_for('main.delete_review', review_id=review.review_id) }}"
-                    style="display: inline"
-                  >
-                    <button
-                      class="btn btn-danger btn-sm"
-                      type="submit"
-                      onclick="return confirm('Delete this review?');"
-                    >
-                      <i class="fas fa-trash-alt"></i>
-                    </button>
-                  </form>
-                </td>
-              </tr>
-
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
 
-    </div>
+
 
     <!-- Analyze Reviews Tab -->
-     
     <div class="tab-pane fade show active" id="analyze-reviews">
       <div class="container mt-4">
         <div class="main-content">
@@ -327,16 +631,59 @@
               <div class="left-panel">
                 <h2 class="analyzed-title">My Analyzed Reviews ({{ reviews|length }})</h2>
 
-                <!-- Filter dropdown -->
-                <div class="mb-3">
-                  <select id="reviewFilterSelect" class="form-select">
-                    <option value="">All Reviews</option>
-                    <option value="positive">Only Positive Reviews</option>
-                    <option value="negative">Only Negative Reviews</option>
-                    <option value="neutral">Only Neutral Reviews</option>
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
-                  </select>
+                <!-- Modern Filter UI -->
+                <div class="filter-container mb-4">
+                  <div class="filter-header">
+                    <i class="fas fa-filter me-2"></i>
+                    <span class="filter-title">Filter Reviews</span>
+                    <span class="filter-count">({{ reviews|length }} total)</span>
+                  </div>
+
+                  <div class="filter-buttons">
+                    <div class="filter-group">
+                      <label class="filter-label">Sentiment:</label>
+                      <div class="btn-group sentiment-filter" role="group">
+                        <input type="radio" class="btn-check" name="sentimentFilter" id="all-sentiment" value="" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary btn-sm" for="all-sentiment">
+                          <i class="fas fa-th-list me-1"></i>All
+                        </label>
+
+                        <input type="radio" class="btn-check" name="sentimentFilter" id="positive-sentiment" value="positive" autocomplete="off">
+                        <label class="btn btn-outline-success btn-sm" for="positive-sentiment">
+                          <i class="fas fa-smile me-1"></i>Positive
+                        </label>
+
+                        <input type="radio" class="btn-check" name="sentimentFilter" id="negative-sentiment" value="negative" autocomplete="off">
+                        <label class="btn btn-outline-danger btn-sm" for="negative-sentiment">
+                          <i class="fas fa-frown me-1"></i>Negative
+                        </label>
+
+                        <input type="radio" class="btn-check" name="sentimentFilter" id="neutral-sentiment" value="neutral" autocomplete="off">
+                        <label class="btn btn-outline-warning btn-sm" for="neutral-sentiment">
+                          <i class="fas fa-meh me-1"></i>Neutral
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="filter-group">
+                      <label class="filter-label">Sort by Date:</label>
+                      <div class="btn-group date-filter" role="group">
+                        <input type="radio" class="btn-check" name="dateFilter" id="newest-first" value="newest" autocomplete="off" checked>
+                        <label class="btn btn-outline-info btn-sm" for="newest-first">
+                          <i class="fas fa-arrow-down me-1"></i>Newest
+                        </label>
+
+                        <input type="radio" class="btn-check" name="dateFilter" id="oldest-first" value="oldest" autocomplete="off">
+                        <label class="btn btn-outline-info btn-sm" for="oldest-first">
+                          <i class="fas fa-arrow-up me-1"></i>Oldest
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="filter-stats">
+                    <span id="filtered-count" class="filtered-count">Showing {{ reviews|length }} reviews</span>
+                  </div>
                 </div>
 
                 {% if reviews %}
@@ -407,7 +754,7 @@
 document.addEventListener('DOMContentLoaded', function() {
   {% if reviews %}
   try {
-    console.log("Sentiment counts:", {
+      console.log("Sentiment counts:", {
       positive: {{ sentiment_counts.positive }},
       negative: {{ sentiment_counts.negative }},
       neutral: {{ sentiment_counts.neutral }}
@@ -477,6 +824,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 </div>
+
 
 
 <!-- Detailed Analysis Modal -->
@@ -967,9 +1315,9 @@ document.addEventListener('DOMContentLoaded', function() {
       });
 
       // Force canvas to fixed size
-      canvas.style.height = '300px';
+      canvas.style.height = '150px';
       canvas.style.maxHeight = '150px';
-      canvas.height = 300;
+      canvas.height = 150;
     }
 
     // Add click handlers for analysis method switching
@@ -993,54 +1341,81 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 });
-</script>
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const filterSelect = document.getElementById("reviewFilterSelect");
-    let reviewCards = Array.from(document.querySelectorAll(".review-card"));
-    const reviewContainer = document.querySelector(".left-panel");
 
-    // Function to sort cards by date
-    function sortByDate(order = "newest") {
-      reviewCards.sort((a, b) => {
-        const dateA = new Date(a.querySelector("small.text-muted").innerText);
-        const dateB = new Date(b.querySelector("small.text-muted").innerText);
-        return order === "newest" ? dateB - dateA : dateA - dateB;
+// Filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const sentimentFilters = document.querySelectorAll('input[name="sentimentFilter"]');
+  const dateFilters = document.querySelectorAll('input[name="dateFilter"]');
+  const reviewCards = document.querySelectorAll('.review-card');
+  const filteredCount = document.getElementById('filtered-count');
+
+  function applyFilters() {
+    const selectedSentiment = document.querySelector('input[name="sentimentFilter"]:checked').value;
+    const selectedDateSort = document.querySelector('input[name="dateFilter"]:checked').value;
+
+    // Convert NodeList to Array for sorting
+    let filteredCards = Array.from(reviewCards);
+
+    // Apply sentiment filter
+    if (selectedSentiment) {
+      filteredCards = filteredCards.filter(card => {
+        const sentiment = card.getAttribute('data-review-sentiment');
+        return sentiment === selectedSentiment;
       });
-      // Re-append sorted cards
-      reviewCards.forEach((card) => reviewContainer.appendChild(card));
     }
 
-    // Function to apply filter
-    function applyFilter(filter) {
-  // Always start by showing all
-  reviewCards.forEach((card) => (card.style.display = "block"));
+    // Apply date sorting
+    if (selectedDateSort === 'newest') {
+      filteredCards.sort((a, b) => {
+        const dateA = new Date(a.querySelector('.text-muted').textContent);
+        const dateB = new Date(b.querySelector('.text-muted').textContent);
+        return dateB - dateA; // Newest first
+      });
+    } else if (selectedDateSort === 'oldest') {
+      filteredCards.sort((a, b) => {
+        const dateA = new Date(a.querySelector('.text-muted').textContent);
+        const dateB = new Date(b.querySelector('.text-muted').textContent);
+        return dateA - dateB; // Oldest first
+      });
+    }
 
-  if (filter === "positive" || filter === "negative" || filter === "neutral") {
-    reviewCards.forEach((card) => {
-      const sentiment = card.getAttribute("data-review-sentiment");
-      if (sentiment !== filter) {
-        card.style.display = "none";
-      }
+    // Hide all cards first
+    reviewCards.forEach(card => card.style.display = 'none');
+
+    // Show filtered and sorted cards
+    filteredCards.forEach(card => card.style.display = 'block');
+
+    // Update count
+    const totalReviews = reviewCards.length;
+    const showingCount = filteredCards.length;
+    filteredCount.textContent = `Showing ${showingCount} of ${totalReviews} reviews`;
+
+    // Reorder DOM elements to match sorted order
+    const container = document.querySelector('.left-panel');
+    const title = container.querySelector('.analyzed-title');
+    const filterContainer = container.querySelector('.filter-container');
+
+    // Remove existing cards
+    reviewCards.forEach(card => card.remove());
+
+    // Re-append sorted cards
+    filteredCards.forEach(card => {
+      container.appendChild(card);
     });
-  } else if (filter === "newest" || filter === "oldest") {
-    sortByDate(filter);
-  } else if (filter === "") {
-    // 🔹 "All Reviews" clicked → show all, newest first
-    sortByDate("newest");
   }
-}
 
-
-    // Event: dropdown change
-    filterSelect.addEventListener("change", function () {
-      applyFilter(this.value);
-    });
-
-    // 🔹 On load: sort all reviews by newest first
-    sortByDate("newest");
-    filterSelect.value = ""; // Keep "All Reviews" selected by default
+  // Add event listeners to filters
+  sentimentFilters.forEach(filter => {
+    filter.addEventListener('change', applyFilters);
   });
+
+  dateFilters.forEach(filter => {
+    filter.addEventListener('change', applyFilters);
+  });
+
+  // Initial filter application
+  applyFilters();
+});
 </script>
 
 {% endblock %}
