@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Overall Sentiment Trends</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Overall Sentiment Trends Over Time</h1>
+    <canvas id="sentimentTrendsChart" width="800" height="400"></canvas>
+
+    <script>
+        const ctx = document.getElementById('sentimentTrendsChart').getContext('2d');
+        const sentimentTrendsChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ dates|tojson }},
+                datasets: [
+                    {
+                        label: 'Positive',
+                        data: {{ positive_counts|tojson }},
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        fill: false,
+                    },
+                    {
+                        label: 'Negative',
+                        data: {{ negative_counts|tojson }},
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        fill: false,
+                    },
+                    {
+                        label: 'Neutral',
+                        data: {{ neutral_counts|tojson }},
+                        borderColor: 'rgba(201, 203, 207, 1)',
+                        fill: false,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Number of Reviews'
+                        },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+

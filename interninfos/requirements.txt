@@ -9,3 +9,4 @@ spacy
 transformers
 torch
 pandas
+openpyxl

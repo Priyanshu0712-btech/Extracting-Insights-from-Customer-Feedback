@@ -1,0 +1,235 @@
+NEW HTML FILE IN TAMPLATES
+{% extends "base.html" %}
+
+{% block title %}Settings | ReviewSense{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block navbar %}
+<nav
+  class="navbar navbar-expand-lg navbar-dark shadow-sm"
+  style="
+    background: linear-gradient(90deg, #18132b 80%, #4b0082 100%);
+    font-family: 'Poppins', sans-serif;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1030;
+  "
+>
+  <div class="container-fluid">
+    <a
+      class="navbar-brand fw-bold text-white"
+      href="#"
+      style="font-size: 1.7rem; letter-spacing: 1px"
+    >
+      Settings
+    </a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+      aria-controls="navbarNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto align-items-center">
+        <li class="nav-item">
+          <a
+            class="nav-link text-white fw-semibold px-3"
+            href="{{ url_for('main.dashboard') }}"
+            >Dashboard</a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link text-white fw-semibold px-3"
+            href="{{ url_for('main.profile') }}"
+            >Profile</a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link text-white fw-semibold px-3"
+            href="{{ url_for('main.logout') }}"
+            >Logout</a
+          >
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<style>
+  body {
+    font-family: "Poppins", sans-serif;
+    background: linear-gradient(rgba(7, 4, 21, 0.7), #070415),
+      url("https://unsplash.com/photos/focus-photography-of-computer-keyboard-with-red-lights-feXpdV001o4")
+        no-repeat center center/cover;
+    color: #c5c1d9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .content-area {
+    margin-top: 80px;
+    padding: 20px;
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    background: #1e1a3a;
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(138, 43, 226, 0.3);
+  }
+
+  .card-box {
+    background: linear-gradient(
+      145deg,
+      rgba(22, 17, 47, 0.7),
+      rgba(15, 12, 32, 0.8)
+    );
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(138, 43, 226, 0.3);
+    padding: 2rem;
+  }
+
+  .form-control {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(138, 43, 226, 0.3);
+    color: #c5c1d9;
+    border-radius: 10px;
+  }
+
+  .form-control:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #8a2be2;
+    color: #c5c1d9;
+    box-shadow: 0 0 0 0.2rem rgba(138, 43, 226, 0.25);
+  }
+
+  .form-label {
+    color: #c5c1d9;
+    font-weight: 500;
+  }
+
+  .btn-primary {
+    background: linear-gradient(45deg, #8a2be2, #4b0082);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 30px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(45deg, #4b0082, #8a2be2);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(138, 43, 226, 0.4);
+  }
+
+  .alert {
+    border-radius: 10px;
+    border: none;
+  }
+
+  .alert-success {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  .alert-danger {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+  }
+
+  .alert-warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+</style>
+
+<div class="content-area">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card-box">
+        <h3 class="text-white mb-4 text-center">
+          <i class="fas fa-cog me-2"></i>Account Settings
+        </h3>
+        <p class="text-white text-center mb-4">Manage your account password</p>
+
+        <form method="POST">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Username</label>
+              <input class="form-control" type="text" value="{{ user.username }}" readonly>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input class="form-control" type="email" value="{{ user.email }}" readonly>
+            </div>
+          </div>
+
+          <hr class="my-4" style="border-color: rgba(138, 43, 226, 0.3);">
+
+          <h5 class="text-white mb-3">Change Password</h5>
+
+          <div class="mb-3">
+            <label for="current_password" class="form-label">Current Password</label>
+            <input class="form-control" type="password" id="current_password" name="current_password" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="new_password" class="form-label">New Password</label>
+            <input class="form-control" type="password" id="new_password" name="new_password" required minlength="6">
+            <div class="form-text text-muted">Password must be at least 6 characters long.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="confirm_password" class="form-label">Confirm New Password</label>
+            <input class="form-control" type="password" id="confirm_password" name="confirm_password" required minlength="6">
+          </div>
+
+          <div class="d-grid">
+            <button class="btn btn-primary" type="submit">
+              <i class="fas fa-save me-2"></i>Update Password
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Password confirmation validation
+document.addEventListener('DOMContentLoaded', function() {
+  const newPassword = document.getElementById('new_password');
+  const confirmPassword = document.getElementById('confirm_password');
+  const form = document.querySelector('form');
+
+  form.addEventListener('submit', function(e) {
+    if (newPassword.value !== confirmPassword.value) {
+      e.preventDefault();
+      alert('New passwords do not match!');
+      return false;
+    }
+  });
+});
+</script>
+
+{% endblock %}

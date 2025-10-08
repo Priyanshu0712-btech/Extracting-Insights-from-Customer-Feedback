@@ -1,6 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Admin Dashboard | ReviewSense {%endblock %} 
+{% block title %}Admin Dashboard | ReviewSense{% endblock %}
+
 {% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background: linear-gradient(90deg, #18132b 80%, #4B0082 100%); font-family: 'Poppins', sans-serif; position: fixed; top: 0; width: 100%; z-index: 1000;">
 <nav
   class="navbar navbar-expand-lg navbar-dark shadow-sm fixed-top"
   style="
@@ -9,494 +11,903 @@
   "
 >
   <div class="container-fluid">
-    <a
-      class="navbar-brand fw-bold text-white"
-      href="#"
-      style="font-size: 1.7rem; letter-spacing: 1px"
-    >
-      Admin Dashboard
+    <a class="navbar-brand fw-bold text-white" style="font-size: 1.7rem; letter-spacing: 1px;">
+      <img src="https://cdn-icons-png.flaticon.com/512/1946/1946429.png" alt="Logo" width="32" class="me-2 align-middle">ReviewSense Admin
     </a>
-    <button
-      class="navbar-toggler"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#navbarNav"
-      aria-controls="navbarNav"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto align-items-center">
-        <li class="nav-item">
-          <a
-            class="nav-link text-white fw-semibold px-3"
-            href="{{ url_for('main.logout') }}"
-            >Logout</a
-          >
-        </li>
-      </ul>
+    <div class="d-flex ms-auto">
+      <a class="btn btn-outline-light" href="{{ url_for('main.logout') }}">Logout</a>
     </div>
   </div>
 </nav>
-{% endblock %} 
+{% endblock %}
 
 {% block content %}
-<style>
-  body {
-    font-family: "Poppins", sans-serif;
-    background: linear-gradient(rgba(7, 4, 21, 0.7), #070415),
-      url("https://unsplash.com/photos/focus-photography-of-computer-keyboard-with-red-lights-feXpdV001o4")
-        no-repeat center center/cover;
-    color: #c5c1d9;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #e0e0e0;
+      min-height: 100vh;
+      overflow-x: hidden; /* Prevent horizontal overflow */
+      padding-top: 80px; /* Account for fixed navbar height */
+    }
+    .container {
+      max-width: 100%;
+      margin: 2rem 0;
+      overflow-x: hidden; /* Prevent horizontal overflow */
+    }
+    /* Override container styles for analytics tab for full screen */
+    #analytics.container {
+      max-width: 100vw !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: none !important;
+      width: 100vw !important;
+      overflow-x: hidden !important; /* Prevent horizontal overflow */
+    }
+    /* Override tab-content background for analytics tab */
+    #analytics.tab-content {
+      background: none !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      overflow-x: hidden !important; /* Prevent horizontal overflow */
+    }
+    /* Make flex container inside analytics tab full width */
+    #analytics > div {
+      width: 100vw !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow-x: hidden !important; /* Prevent horizontal overflow */
+    }
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #555;
+      margin-bottom: 1rem;
+    }
+    .tab {
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      font-weight: 600;
+      color: #ccc;
+    }
+    .tab.active {
+      border-color: #9b59b6 #9b59b6 #121212;
+      color: #9b59b6;
+      background: #121212;
+      border-radius: 8px 8px 0 0;
+    }
+    .tab-content {
+      background: #121212;
+      padding: 1.5rem;
+      border-radius: 0 8px 8px 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      color: #ddd;
+      overflow-x: hidden; /* Prevent horizontal overflow */
+    }
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 3fr 1fr;
+      gap: 1.5rem;
+    }
+    .chart-card, .panel-card {
+      background: #222;
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.7);
+      color: #ddd;
+    }
+    .chart-title {
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: #9b59b6;
+    }
+    .filter-group {
+      margin-bottom: 1rem;
+    }
+    .filter-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+    select.form-select {
+      width: 100%;
+    }
+    .admin-panel-stats {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 1rem;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #4b0082;
+    }
+    .stat-label {
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+    .btn-primary, .btn-secondary, .btn-success {
+      width: 100%;
+      margin-bottom: 0.5rem;
+    }
+    .user-card {
+      background: #222;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.7);
+      color: #ddd;
+    }
+    .user-card h5 {
+      color: #9b59b6;
+      margin-bottom: 0.5rem;
+    }
+    .user-card p {
+      margin: 0.3rem 0;
+      color: #aaa;
+    }
+    .user-card .btn-danger {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .user-card .btn-danger:hover {
+      background: #c82333;
+    }
+    .users-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+  </style>
 
-  /* Sidebar */
-  .sidebar {
-    background: #18132b;
-    position: fixed;
-    top: 56px;
-    bottom: 40px;
-    left: 0;
-    width: 220px;
-    padding-top: 20px;
-    overflow-y: auto;
-  }
-  .sidebar .nav-link {
-    color: #c5c1d9;
-    font-weight: 500;
-    padding: 12px 20px;
-    display: block;
-  }
-  .sidebar .nav-link.active,
-  .sidebar .nav-link:hover {
-    background: #4b0082;
-    color: #fff;
-    border-radius: 8px;
-  }
+<div class="container">
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="dashboard">Dashboard</div>
+    <div class="tab" data-tab="analytics">Analytics</div>
+    <div class="tab" data-tab="admin">Admin</div>
+    <div class="tab" data-tab="settings">Settings</div>
+  </div>
 
-  .content-area {
-    margin-left: 240px;
-    padding: 2rem;
-  }
-
-  .card-box {
-    background: linear-gradient(
-      145deg,
-      rgba(22, 17, 47, 0.7),
-      rgba(15, 12, 32, 0.8)
-    );
-    border-radius: 20px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(138, 43, 226, 0.3);
-    padding: 2rem;
-  }
-
-  .table {
-    background: #18132b;
-    color: #fff;
-  }
-  .table thead {
-    background: #4b0082;
-    color: #fff;
-  }
-
-  /* Analyze Reviews Section */
-  #analyze-reviews .container {
-    width: 100%;
-    max-width: 1400px;
-    margin: 20px auto;
-    background: black;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-    padding: 30px;
-    color: #222;
-    font-family: "Segoe UI", Arial, sans-serif;
-  }
-  #analyze-reviews .main-content {
-    display: flex;
-    gap: 32px;
-    align-items: flex-start;
-  }
-  #analyze-reviews .left-panel {
-    flex: 2;
-    max-height: 90vh;
-    overflow-y: auto;
-    padding-right: 10px;
-    position: relative;
-  }
-  #analyze-reviews .left-panel .analyzed-title {
-    font-size: 1.8rem;
-    color: #2774f0;
-    font-weight: 600;
-    margin-bottom: 20px;
-    background: black;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    padding: 10px 5px;
-    border-bottom: 1px solid #ddd;
-  }
-  #analyze-reviews .right-panel {
-    flex: 1;
-    position: sticky;
-    top: 0;
-    align-self: flex-start;
-    height: fit-content;
-  }
-
-  /* Review card */
-  #analyze-reviews .review-card {
-    background: #f5f8fc;
-    border-radius: 8px;
-    margin-bottom: 18px;
-    padding: 18px 20px;
-    box-shadow: 0 2px 10px rgba(39, 116, 240, 0.05);
-  }
-  #analyze-reviews .review-text {
-    font-size: 1.07em;
-    margin-bottom: 10px;
-    color: #333;
-  }
-  #analyze-reviews .review-steps span {
-    display: inline-block;
-    background: #e3e8f8;
-    color: #2774f0;
-    padding: 4px 12px;
-    margin-right: 6px;
-    border-radius: 8px;
-    font-size: 0.98em;
-    font-weight: 500;
-  }
-  #analyze-reviews .review-meta {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-  }
-  #analyze-reviews .badge-sentiment {
-    font-size: 1rem;
-    padding: 0.4em 1em;
-    border-radius: 14px;
-    font-weight: 600;
-  }
-  .badge-positive { background: #22c55e; color: #fff; }
-  .badge-negative { background: #dc3545; color: #fff; }
-  .badge-neutral { background: #facc15; color: #18132b; }
-  .confidence { color: #666; font-size: 0.97em; }
-
-  /* Sentiment chart */
-  #analyze-reviews .sentiment-chart {
-    background: #f8fafc;
-    margin-top: 24px;
-    border-radius: 8px;
-    padding: 15px;
-    text-align: center;
-  }
-  #analyze-reviews .sentiment-chart h4 {
-    color: #2774f0;
-    font-size: 1.08em;
-    margin-bottom: 7px;
-  }
-  #analyze-reviews .chart-placeholder {
-    width: 120px;
-    height: 120px;
-    margin: 0 auto;
-    border-radius: 50%;
-    background: conic-gradient(
-      #36c54d 0 65deg,
-      #ed6755 65deg 120deg,
-      #e2e6ea 120deg 360deg
-    );
-    box-shadow: 0 2px 10px rgba(39, 116, 240, 0.05);
-  }
-
-  /* Sidebar info boxes */
-  #analyze-reviews .sidebar-section {
-    background: #eef4fe;
-    border-radius: 10px;
-    padding: 16px;
-    margin-bottom: 8px;
-    box-shadow: 0 2px 10px rgba(39, 116, 240, 0.04);
-  }
-  #analyze-reviews .sidebar-section h4 {
-    color: #2774f0;
-    font-size: 1.02em;
-    margin-bottom: 7px;
-    font-weight: 600;
-  }
-  #analyze-reviews .sidebar-section ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  #analyze-reviews .sidebar-section ul li {
-    font-size: 0.98em;
-    margin-bottom: 7px;
-    color: #222;
-  }
-
-  /* Mobile responsive */
-  @media (max-width: 900px) {
-    #analyze-reviews .main-content { flex-direction: column; }
-    #analyze-reviews .right-panel { margin-top: 18px; }
-  }
-</style>
-
-<div class="sidebar">
-  <nav class="nav flex-column">
-    <a class="nav-link" data-bs-toggle="tab" href="#user-details">👤 User Details</a>
-    <a class="nav-link" data-bs-toggle="tab" href="#analyze-reviews">📊 Analyze Reviews</a>
-  </nav>
-</div>
-
-<div class="content-area">
-  <div class="tab-content">
-    <!-- Default Blank -->
-    <div class="tab-pane fade show active" id="blank">
-      <h4 class="text-muted">Please select a menu item from the left.</h4>
-    </div>
-
-    <!-- User Details -->
-    <div class="tab-pane fade" id="user-details">
-      <div class="card-box">
-        <h3 class="text-white mb-3">User Details</h3>
-        <div class="table-responsive">
-          <table class="table table-bordered table-hover align-middle">
-            <thead>
-              <tr>
-                <th>User ID</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Reviews</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for user in users %}
-              <tr>
-                <td>{{ user.user_id }}</td>
-                <td>{{ user.username }}</td>
-                <td>{{ user.email }}</td>
-                <td>
-                  {% if user.reviews %}
-                  <ul class="list-group list-group-flush">
-                    {% for review in user.reviews %}
-                    <li class="list-group-item">
-                      <span class="fw-bold">{{ review.uploaded_at }}</span>: {{ review.highlighted_text | safe }}
-                    </li>
-                    {% endfor %}
-                  </ul>
-                  {% else %}
-                  <span class="text-muted">No reviews</span>
-                  {% endif %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+  <div class="tab-content" id="dashboard" style="display: block;">
+    <div class="dashboard-grid">
+      <div class="chart-card">
+        <div class="chart-title">Sentiment Trends Over Time</div>
+        <canvas id="sentimentTrendsChart" height="100"></canvas>
+        <div class="chart-title" style="margin-top: 1rem;">Top Aspects by Sentiment</div>
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+          <div style="flex: 1;">
+            <h5 style="color: #22c55e; margin-bottom: 0.5rem;">Top Positive Aspects</h5>
+            <canvas id="topPositiveAspectsChart" height="200"></canvas>
+          </div>
+          <div style="flex: 1;">
+            <h5 style="color: #dc3545; margin-bottom: 0.5rem;">Top Negative Aspects</h5>
+            <canvas id="topNegativeAspectsChart" height="200"></canvas>
+          </div>
         </div>
       </div>
-    </div>
-
-    <!-- Analyze Reviews -->
-    <div class="tab-pane fade" id="analyze-reviews">
-      <div class="container mt-4">
-        <!-- Sentiment Overview at Top -->
-        <div class="sentiment-overview-top mb-4" style="background: white; color: black; padding: 1rem; border-radius: 20px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1); max-width: 100%;">
-          <div class="row align-items-center">
-            <div class="col-md-6 text-center">
-              <h4 class="text-dark mb-3">Overall Sentiment Distribution</h4>
-              <p><strong>Total Reviews:</strong> {{ reviews|length }}</p>
-              <div class="d-flex justify-content-around mb-3">
-                <div>
-                  <h5 style="color: #22c55e;">{{ sentiment_counts.positive }}</h5>
-                  <small style="color: #666;">Positive</small>
-                </div>
-                <div>
-                  <h5 style="color: #dc3545;">{{ sentiment_counts.negative }}</h5>
-                  <small style="color: #666;">Negative</small>
-                </div>
-                <div>
-                  <h5 style="color: #facc15;">{{ sentiment_counts.neutral }}</h5>
-                  <small style="color: #666;">Neutral</small>
-                </div>
-              </div>
-              <p style="color: #333;">Sentiment Distribution of All Reviews</p>
-            </div>
-            <div class="col-md-6 d-flex justify-content-end">
-              <canvas id="adminSentimentChart" width="210" height="210" style="max-width: 100%; height: auto;"></canvas>
-            </div>
+      <div class="panel-card">
+        <div class="filter-group">
+          <label for="filterCategory">Product Category</label>
+          <select id="filterCategory" class="form-select">
+            <option value="all">All Categories</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filterTimeRange">Time Range</label>
+          <select id="filterTimeRange" class="form-select">
+            <option value="7">Last 7 Days</option>
+            <option value="30">Last 30 Days</option>
+            <option value="90">Last 90 Days</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filterSentiment">Sentiment</label>
+          <select id="filterSentiment" class="form-select">
+            <option value="all">All</option>
+            <option value="positive">Positive</option>
+            <option value="negative">Negative</option>
+            <option value="neutral">Neutral</option>
+          </select>
+        </div>
+        <hr>
+        <div class="admin-panel-stats">
+          <div class="stat-item">
+            <div class="stat-number" id="statReviews">0</div>
+            <div class="stat-label">Reviews</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="statAspects">0</div>
+            <div class="stat-label">Aspects</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="statAccuracy">0%</div>
+            <div class="stat-label">Accuracy</div>
           </div>
         </div>
+        <button class="btn btn-secondary" id="btnExportData">Export Data</button>
+        <button class="btn btn-success" id="btnReadyDeployment">Ready for Deployment</button>
+      </div>
+    </div>
+  </div>
 
-        <div class="main-content">
-          <!-- Left Panel: Reviews -->
-          <div class="left-panel">
-            <h2 class="analyzed-title">Analyzed Reviews ({{ reviews|length }})</h2>
-
-            {% if reviews %}
-              {% for review in reviews %}
-              <div class="review-card">
-                <div class="review-text">"{{ review.highlighted_text | safe }}"</div>
-                {% if loop.first %}
-                <div class="review-steps">
-                  <span>Original</span>
-                  <span>Cleaned</span>
-                  <span>Tokenized</span>
-                  <span>Processed</span>
-                </div>
-                {% endif %}
-                <div class="review-meta">
-                  {% if review.overall_sentiment and review.overall_sentiment.lower() == "positive" %}
-                  <span class="badge-sentiment badge-positive">Positive</span>
-                  {% elif review.overall_sentiment and review.overall_sentiment.lower() == "negative" %}
-                  <span class="badge-sentiment badge-negative">Negative</span>
-                  {% else %}
-                  <span class="badge-sentiment badge-neutral">{{ review.overall_sentiment or "Neutral" }}</span>
-                  {% endif %}
-                  <span class="confidence">
-                    Confidence: {{ (review.overall_sentiment_score * 100) | round(1) if review.overall_sentiment_score else 'N/A' }}%
-                  </span>
-                </div>
-              </div>
-              {% endfor %}
-            {% else %}
-              <p class="text-muted">No reviews available.</p>
-            {% endif %}
-          </div>
-
-          <!-- Right Panel: Side Info -->
-          <div class="right-panel">
-            <div class="sidebar-section">
-              <h4>Text Preprocessing</h4>
-              <ul>
-                <li><b>Text Cleaning:</b> Special chars, emojis</li>
-                <li><b>Tokenization:</b> Word segmentation</li>
-                <li><b>Normalization:</b> Lowercasing</li>
-                <li><b>Stop Words:</b> Removal using NLTK</li>
-              </ul>
-            </div>
-            <div class="sidebar-section">
-              <h4>Sentiment Analysis</h4>
-              <ul>
-                <li><b>Hugging Face</b> Transformers</li>
-                <li><b>Classification:</b> Pos/Neg/Neutral</li>
-                <li><b>Confidence:</b> Scoring</li>
-                <li><b>Real-time:</b> Processing</li>
-              </ul>
-            </div>
-            <div class="sidebar-section last">
-              <h4>Expected Outcome</h4>
-              <ul>
-                <li>Functional preprocessing pipeline</li>
-                <li>Accurate sentiment classification</li>
-                <li>Visual sentiment distribution</li>
-                <li>Working review list interface</li>
-              </ul>
-            </div>
+  <div class="tab-content" id="analytics" style="display: none;">
+    <div style="display: grid; grid-template-columns: 1.8fr 0.6fr; gap: 1rem; height: calc(100vh - 200px); overflow-x: hidden;">
+      <!-- Left side: Reviews list -->
+      <div style="background: #121212; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); border: 1px solid #444; display: flex; flex-direction: column; overflow-x: hidden;">
+        <h3 style="border-bottom: 1px solid #9b59b6; padding-bottom: 0.5rem; margin-bottom: 1rem; color: #ddd;">
+          Displayed Reviews (<span id="reviewCount">0</span>)
+        </h3>
+        <div id="reviewList" style="flex: 1; overflow-y: auto; overflow-x: hidden;">
+          <!-- Reviews will be loaded here -->
+        </div>
+      </div>
+      <!-- Right side: Vertical container with sentiment info -->
+      <div style="background: #222; padding: 0.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); border: 1px solid #444; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; gap: 0.5rem; flex: 0.7; max-width: 260px;">
+        <h3 style="margin-bottom: 0.3rem; font-size: 0.9rem; color: #ddd;">Overall Sentiment</h3>
+        <canvas id="sentimentPieChart" style="width: 250px; height: 250px;"></canvas>
+        <div style="width: 100%;">
+          <h4 style="color: #9b59b6; margin-bottom: 0.3rem;">Sentiment Breakdown</h4>
+          <div style="font-size: 1rem; font-weight: 600; color: #ddd; display: flex; flex-direction: column; gap: 3px;">
+            <div>Total Reviews: <span id="totalReviews">0</span></div>
+            <div style="color: #22c55e;">Positive: <span id="positivePercent">0%</span></div>
+            <div style="color: #dc3545;">Negative: <span id="negativePercent">0%</span></div>
+            <div style="color: #facc15;">Neutral: <span id="neutralPercent">0%</span></div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <div class="tab-content" id="admin" style="display: none;">
+    <h3>Admin Panel</h3>
+    <div id="usersList">
+      <!-- Users will be loaded here -->
+    </div>
+  </div>
+
+  <div class="tab-content" id="settings" style="display: none;">
+    <h3 style="color: #9b59b6; margin-bottom: 1rem;">Settings</h3>
+    <div style="display: flex; justify-content: center;">
+      <div style="background: #f3e5f5; border-radius: 8px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid #ccc; max-width: 600px; width: 100%;">
+        <div style="border-bottom: 1px solid #9b59b6; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+          <h5 style="color: #9b59b6; margin: 0; font-weight: 700;">Change Password</h5>
+        </div>
+        <div style="margin-bottom: 1.5rem;">
+          <p style="color: #666; margin: 0;">Update your password to keep your account secure.</p>
+        </div>
+        <div id="passwordChangeMessage" style="margin-bottom: 1rem;"></div>
+        <form id="changePasswordForm">
+          <div style="margin-bottom: 1rem;">
+            <label for="current_password" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #333;">Current Password</label>
+            <input type="password" id="current_password" name="current_password" required placeholder="Enter your current password" style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #333; font-size: 1rem;">
+          </div>
+          <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+            <div style="flex: 1;">
+              <label for="new_password" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #333;">New Password</label>
+              <input type="password" id="new_password" name="new_password" required minlength="6" placeholder="Enter new password" style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #333; font-size: 1rem;">
+            </div>
+            <div style="flex: 1;">
+              <label for="confirm_password" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #333;">Confirm New Password</label>
+              <input type="password" id="confirm_password" name="confirm_password" required minlength="6" placeholder="Confirm new password" style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #333; font-size: 1rem;">
+            </div>
+          </div>
+          <button type="submit" id="changePasswordBtn" style="width: 100%; padding: 0.75rem; background: linear-gradient(90deg, #9b59b6, #4B0082); color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer;">Update Password</button>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 
-{% endblock %} 
+{% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Hide blank tab after click
-  document.querySelectorAll(".sidebar .nav-link").forEach((link) => {
-    link.addEventListener("click", () => {
-      document.getElementById("blank").classList.remove("show", "active");
+  // Tab switching
+  document.querySelectorAll('#tabs .tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('#tabs .tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
+      document.getElementById(tab.dataset.tab).style.display = 'block';
     });
   });
 
-  // Initialize admin sentiment chart
-  document.addEventListener('DOMContentLoaded', function() {
-    {% if reviews %}
-    try {
-      console.log("Admin sentiment counts:", {
-        positive: {{ sentiment_counts.positive }},
-        negative: {{ sentiment_counts.negative }},
-        neutral: {{ sentiment_counts.neutral }}
-      });
-      const ctx = document.getElementById('adminSentimentChart').getContext('2d');
-      window.adminSentimentChart = new Chart(ctx, {
-        type: 'pie',
+  // Dynamic data for charts
+  const sentimentTrendsCtx = document.getElementById('sentimentTrendsChart').getContext('2d');
+  const sentimentTrendsChart = new Chart(sentimentTrendsCtx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'Positive',
+          data: [],
+          borderColor: '#22c55e',
+          fill: true,
+          backgroundColor: 'rgba(34, 197, 94, 0.2)',
+          tension: 0.3
+        },
+        {
+          label: 'Negative',
+          data: [],
+          borderColor: '#dc3545',
+          fill: true,
+          backgroundColor: 'rgba(220, 53, 69, 0.2)',
+          tension: 0.3
+        },
+        {
+          label: 'Neutral',
+          data: [],
+          borderColor: '#facc15',
+          fill: true,
+          backgroundColor: 'rgba(250, 204, 21, 0.2)',
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+
+
+
+  // Fetch and update admin stats
+  async function fetchAdminStats() {
+    const res = await fetch('/admin/api/admin_stats', { credentials: 'include' });
+    const data = await res.json();
+    document.getElementById('statReviews').textContent = data.reviews;
+    document.getElementById('statAspects').textContent = data.aspects;
+    document.getElementById('statAccuracy').textContent = data.accuracy + '%';
+  }
+
+  // Fetch and update sentiment trends chart
+  async function fetchSentimentTrends() {
+    const category = document.getElementById('filterCategory').value;
+    const timeRange = document.getElementById('filterTimeRange').value;
+    const sentiment = document.getElementById('filterSentiment').value;
+
+    const res = await fetch(`/admin/api/sentiment_trends?category=${category}&time_range=${timeRange}&sentiment=${sentiment}`, { credentials: 'include' });
+    const data = await res.json();
+
+    sentimentTrendsChart.data.labels = data.dates;
+    sentimentTrendsChart.data.datasets[0].data = data.positive;
+    sentimentTrendsChart.data.datasets[1].data = data.negative;
+    sentimentTrendsChart.data.datasets[2].data = data.neutral;
+    sentimentTrendsChart.update();
+  }
+
+  // Fetch and update top aspects bar charts
+  async function fetchAspectSentimentDistribution() {
+    const category = document.getElementById('filterCategory').value;
+    const timeRange = document.getElementById('filterTimeRange').value;
+    const sentiment = document.getElementById('filterSentiment').value;
+
+    const res = await fetch(`/admin/api/aspect_sentiment_distribution?category=${category}&time_range=${timeRange}&sentiment=${sentiment}`, { credentials: 'include' });
+    const data = await res.json();
+
+    console.log("Aspect Sentiment Distribution Data:", data);  // Added log for debugging
+
+    // Positive aspects bar chart
+    const positiveCtx = document.getElementById('topPositiveAspectsChart').getContext('2d');
+    if (window.positiveAspectsChart) {
+      window.positiveAspectsChart.destroy();
+    }
+    if (data.top_positive_aspects && data.top_positive_aspects.length > 0) {
+      const labels = data.top_positive_aspects.map(a => a.aspect);
+      const values = data.top_positive_aspects.map(a => a.avg_confidence * 100);
+      window.positiveAspectsChart = new Chart(positiveCtx, {
+        type: 'bar',
         data: {
-          labels: ['Positive', 'Negative', 'Neutral'],
+          labels: labels,
           datasets: [{
-            data: [{{ sentiment_counts.positive }}, {{ sentiment_counts.negative }}, {{ sentiment_counts.neutral }}],
-            backgroundColor: [
-              '#22c55e',
-              '#dc3545',
-              '#facc15'
-            ],
+            label: 'Confidence (%)',
+            data: values,
+            backgroundColor: '#22c55e',
+            borderColor: '#22c55e',
             borderWidth: 1
           }]
         },
         options: {
           responsive: true,
           plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                color: '#333'
-              }
-            }
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true, max: 100 }
           }
         }
       });
-    } catch (error) {
-      console.error('Error initializing admin sentiment chart:', error);
+    } else {
+      positiveCtx.font = '16px Arial';
+      positiveCtx.fillStyle = '#666';
+      positiveCtx.textAlign = 'center';
+      positiveCtx.fillText('No positive aspects found', positiveCtx.canvas.width / 2, positiveCtx.canvas.height / 2);
     }
-    {% else %}
-    // No reviews - show neutral state
-    try {
-      console.log("No reviews data found, showing empty chart.");
-      const ctx = document.getElementById('adminSentimentChart').getContext('2d');
-      window.adminSentimentChart = new Chart(ctx, {
-        type: 'pie',
+
+    // Negative aspects bar chart
+    const negativeCtx = document.getElementById('topNegativeAspectsChart').getContext('2d');
+    if (window.negativeAspectsChart) {
+      window.negativeAspectsChart.destroy();
+    }
+    if (data.top_negative_aspects && data.top_negative_aspects.length > 0) {
+      const labels = data.top_negative_aspects.map(a => a.aspect);
+      const values = data.top_negative_aspects.map(a => a.avg_confidence * 100);
+      window.negativeAspectsChart = new Chart(negativeCtx, {
+        type: 'bar',
         data: {
-          labels: [],
+          labels: labels,
           datasets: [{
-            data: [],
-            backgroundColor: [],
-            borderWidth: 0
+            label: 'Confidence (%)',
+            data: values,
+            backgroundColor: '#dc3545',
+            borderColor: '#dc3545',
+            borderWidth: 1
           }]
         },
         options: {
           responsive: true,
           plugins: {
-            legend: {
-              display: false
-            }
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true, max: 100 }
           }
         }
       });
-    } catch (error) {
-      console.error('Error initializing empty admin sentiment chart:', error);
+    } else {
+      negativeCtx.font = '16px Arial';
+      negativeCtx.fillStyle = '#666';
+      negativeCtx.textAlign = 'center';
+      negativeCtx.fillText('No negative aspects found', negativeCtx.canvas.width / 2, negativeCtx.canvas.height / 2);
     }
-    {% endif %}
+  }
+
+  // Fetch and populate product categories filter (assuming categories are from aspect_categories)
+  async function fetchProductCategories() {
+    const res = await fetch('/admin/api/aspect_categories', { credentials: 'include' });
+    const categories = await res.json();
+    const select = document.getElementById('filterCategory');
+    categories.forEach(cat => {
+      const option = document.createElement('option');
+      option.value = cat.name;
+      option.textContent = cat.name;
+      select.appendChild(option);
+    });
+  }
+
+  // Export data button click handler
+  document.getElementById('btnExportData').addEventListener('click', () => {
+    // Prompt user for format
+    const format = prompt('Enter export format (excel or pdf):', 'excel');
+    if (!format) return;
+    const url = `/admin/export_data?format=${format.toLowerCase()}`;
+    window.open(url, '_blank');
   });
 
-  // Update chart when switching to analyze-reviews tab
-  document.querySelectorAll('.sidebar .nav-link').forEach(function(triggerEl) {
-    triggerEl.addEventListener('shown.bs.tab', function(event) {
-      if (event.target.getAttribute('href') === '#analyze-reviews') {
-        if (window.adminSentimentChart) {
-          window.adminSentimentChart.update();
-        }
+
+
+  // Ready for Deployment button click handler (placeholder)
+  document.getElementById('btnReadyDeployment').addEventListener('click', () => {
+    alert('Ready for Deployment feature coming soon!');
+  });
+
+  // Event listeners for filters
+  document.getElementById('filterCategory').addEventListener('change', () => {
+    fetchSentimentTrends();
+    fetchAspectSentimentDistribution();
+    fetchAdminStats();
+  });
+  document.getElementById('filterTimeRange').addEventListener('change', () => {
+    fetchSentimentTrends();
+    fetchAspectSentimentDistribution();
+    fetchAdminStats();
+  });
+  document.getElementById('filterSentiment').addEventListener('change', () => {
+    fetchSentimentTrends();
+    fetchAspectSentimentDistribution();
+    fetchAdminStats();
+  });
+
+  // Fetch and display users in settings tab
+  async function fetchUsers() {
+    const res = await fetch('/admin/api/users', { credentials: 'include' });
+    const data = await res.json();
+    const users = data.users || [];
+    const usersList = document.getElementById('usersList');
+    if (users.length === 0) {
+      usersList.innerHTML = '<p style="color: #aaa; text-align: center;">No users found.</p>';
+      return;
+    }
+    // Render users as cards in a grid
+    usersList.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'users-grid';
+    users.forEach(user => {
+      const card = document.createElement('div');
+      card.className = 'user-card';
+      card.innerHTML = `
+        <h5>${user.username} (ID: ${user.user_id})</h5>
+        <p><strong>Email:</strong> ${user.email}</p>
+        <p><strong>Created At:</strong> ${user.created_at}</p>
+        <button class="btn-danger" onclick="deleteUser(${user.user_id})">Delete</button>
+      `;
+      grid.appendChild(card);
+    });
+    usersList.appendChild(grid);
+  }
+
+  // Delete user function
+  async function deleteUser(userId) {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+    const res = await fetch(`/admin/api/users/${userId}`, { method: 'DELETE', credentials: 'include' });
+    if (res.ok) {
+      alert('User deleted successfully');
+      fetchUsers(); // Refresh the list
+    } else {
+      const err = await res.json();
+      alert('Error: ' + (err.error || 'Failed to delete user'));
+    }
+  }
+
+  // Combined tab switching logic
+  document.querySelectorAll('#tabs .tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('#tabs .tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
+      document.getElementById(tab.dataset.tab).style.display = 'block';
+      if (tab.dataset.tab === 'admin') {
+        fetchUsers();
+      }
+      if (tab.dataset.tab === 'analytics') {
+        fetchAnalyticsData();
       }
     });
   });
+
+  // Initial load
+  fetchProductCategories().then(() => {
+    fetchSentimentTrends();
+    fetchAspectSentimentDistribution();
+    fetchAdminStats();
+  });
+
+  // Analytics tab: fetch and render sentiment distribution and reviews
+  async function fetchAnalyticsData() {
+    try {
+      const res = await fetch('/admin/api/analytics_data', { credentials: 'include' });
+      if (!res.ok) {
+        console.error('API error:', res.status, res.statusText);
+        return;
+      }
+      const data = await res.json();
+      console.log('Fetched data:', data);
+
+      const reviews = data.reviews || [];
+      // Compute sentiment counts from displayed reviews array
+      const sentimentCounts = { positive: 0, negative: 0, neutral: 0 };
+      reviews.forEach(r => {
+        let sentimentRaw = (r.overall_sentiment || 'neutral').toLowerCase();
+        // Map sentiment variations to expected keys
+        let sentiment = 'neutral';
+        if (sentimentRaw.includes('pos')) {
+          sentiment = 'positive';
+        } else if (sentimentRaw.includes('neg')) {
+          sentiment = 'negative';
+        } else if (sentimentRaw.includes('neu')) {
+          sentiment = 'neutral';
+        }
+        console.log('Mapped sentiment:', sentimentRaw, '->', sentiment);
+        sentimentCounts[sentiment]++;
+      });
+      const totalReviews = reviews.length;
+      document.getElementById('totalReviews').textContent = totalReviews;
+      console.log('Computed sentiment counts:', sentimentCounts);
+      console.log('Total reviews:', totalReviews);
+
+      // Pie chart for sentiment distribution
+      const ctx = document.getElementById('sentimentPieChart').getContext('2d');
+      if (window.sentimentPieChartInstance) {
+        window.sentimentPieChartInstance.destroy();
+      }
+      if (totalReviews > 0) {
+        // Calculate percentages
+        const positivePercent = ((sentimentCounts.positive / totalReviews) * 100).toFixed(1);
+        const negativePercent = ((sentimentCounts.negative / totalReviews) * 100).toFixed(1);
+        const neutralPercent = ((sentimentCounts.neutral / totalReviews) * 100).toFixed(1);
+
+        // Update percentage text elements
+        document.getElementById('positivePercent').textContent = positivePercent + '%';
+        document.getElementById('negativePercent').textContent = negativePercent + '%';
+        document.getElementById('neutralPercent').textContent = neutralPercent + '%';
+
+        window.sentimentPieChartInstance = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: ['Positive', 'Negative', 'Neutral'],
+            datasets: [{
+              data: [
+                sentimentCounts.positive,
+                sentimentCounts.negative,
+                sentimentCounts.neutral
+              ],
+              backgroundColor: ['#22c55e', '#dc3545', '#facc15']
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: false }
+            },
+            animation: false
+          }
+        });
+      } else {
+        ctx.font = '16px Arial';
+        ctx.fillStyle = '#666';
+        ctx.textAlign = 'center';
+        ctx.fillText('No reviews available for chart', ctx.canvas.width / 2, ctx.canvas.height / 2);
+      }
+
+          // Render reviews list with tabs
+          document.getElementById('reviewCount').textContent = reviews.length;
+          const reviewList = document.getElementById('reviewList');
+          reviewList.innerHTML = '';
+          console.log('Reviews:', reviews);
+
+          if (reviews.length === 0) {
+            reviewList.innerHTML = '<p style="color: #aaa; text-align: center;">No reviews available.</p>';
+          } else {
+            reviews.forEach((r, index) => {
+              // Create review card container
+              const card = document.createElement('div');
+              card.style.border = '1px solid #444';
+              card.style.borderRadius = '8px';
+              card.style.padding = '1rem';
+              card.style.marginBottom = '1rem';
+              card.style.backgroundColor = '#222';
+
+              // Username display
+              const usernameSpan = document.createElement('span');
+              usernameSpan.textContent = `User: ${r.username || 'Unknown'}`;
+
+              usernameSpan.style.fontWeight = '700';
+              usernameSpan.style.marginRight = '1rem';
+              usernameSpan.style.color = '#ddd';
+
+              // Sentiment label and confidence
+              const sentimentLabel = r.overall_sentiment ? r.overall_sentiment.charAt(0).toUpperCase() + r.overall_sentiment.slice(1) : 'Neutral';
+              const sentimentNormalized = (r.overall_sentiment || 'neutral').toLowerCase().trim();
+              const sentimentColor = sentimentNormalized === 'positive' ? '#22c55e' : (sentimentNormalized === 'negative' ? '#dc3545' : '#facc15');
+
+              const sentimentBadge = document.createElement('span');
+              sentimentBadge.textContent = sentimentLabel;
+              sentimentBadge.style.backgroundColor = sentimentColor;
+              sentimentBadge.style.color = 'white';
+              sentimentBadge.style.padding = '0.3rem 0.6rem';
+              sentimentBadge.style.borderRadius = '12px';
+              sentimentBadge.style.fontWeight = '600';
+              sentimentBadge.style.marginRight = '1rem';
+
+              const confidenceSpan = document.createElement('span');
+              confidenceSpan.textContent = `Confidence: ${(r.overall_sentiment_score * 100).toFixed(1)}%`;
+              confidenceSpan.style.color = '#aaa';
+
+              // Expand button for detailed analysis
+              const expandBtn = document.createElement('button');
+              expandBtn.textContent = 'Show Details';
+              expandBtn.style.padding = '0.3rem 0.6rem';
+              expandBtn.style.border = '1px solid #666';
+              expandBtn.style.borderRadius = '4px';
+              expandBtn.style.cursor = 'pointer';
+              expandBtn.style.backgroundColor = '#333';
+              expandBtn.style.color = '#ddd';
+              expandBtn.style.marginLeft = 'auto';
+              expandBtn.style.display = 'block';
+              expandBtn.style.marginTop = '0.5rem';
+
+              // Tabs container (initially hidden)
+              const tabsContainer = document.createElement('div');
+              tabsContainer.style.marginTop = '0.5rem';
+              tabsContainer.style.display = 'none';
+
+              // Tab buttons
+              const tabNames = ['Original', 'Cleaned', 'Tokenized', 'Processed'];
+              const tabButtons = document.createElement('div');
+              tabButtons.style.display = 'flex';
+              tabButtons.style.gap = '0.5rem';
+              tabButtons.style.marginBottom = '0.5rem';
+
+              // Tab contents
+              const tabContents = document.createElement('div');
+              tabContents.style.border = '1px solid #666';
+              tabContents.style.borderRadius = '6px';
+              tabContents.style.padding = '0.5rem';
+              tabContents.style.backgroundColor = '#121212';
+              tabContents.style.whiteSpace = 'pre-wrap';
+              tabContents.style.fontFamily = 'monospace';
+              tabContents.style.fontSize = '0.9rem';
+              tabContents.style.maxHeight = '150px';
+              tabContents.style.overflowY = 'auto';
+
+              // Loading indicator
+              const loadingDiv = document.createElement('div');
+              loadingDiv.textContent = 'Loading detailed analysis...';
+              loadingDiv.style.color = '#aaa';
+              loadingDiv.style.textAlign = 'center';
+              loadingDiv.style.display = 'none';
+
+              // Helper to set active tab
+              let activeTab = 'Original';
+              let detailedData = null;
+
+              function setActiveTab(tabName) {
+                activeTab = tabName;
+                tabButtons.querySelectorAll('button').forEach(btn => {
+                  btn.style.backgroundColor = btn.textContent === tabName ? '#9b59b6' : '#222';
+                  btn.style.color = btn.textContent === tabName ? 'white' : '#ddd';
+                });
+                updateTabContent();
+              }
+
+              // Update tab content
+              function updateTabContent() {
+                if (!detailedData && activeTab !== 'Original') {
+                  tabContents.textContent = 'Click "Show Details" to load analysis';
+                  return;
+                }
+
+                let content = '';
+                switch (activeTab) {
+                  case 'Original':
+                    content = r.review_text;
+                    break;
+                case 'Cleaned':
+                    content = detailedData ? (detailedData.clean_text || 'N/A') : 'N/A';
+                    break;
+                  case 'Tokenized':
+                    content = detailedData ? (detailedData.aspects ? detailedData.aspects.join(', ') : 'N/A') : 'N/A';
+                    break;
+                  case 'Processed':
+                    content = detailedData ? (detailedData.highlighted_text || 'N/A') : 'N/A';
+                    break;
+                }
+                if (activeTab === 'Processed') {
+                  tabContents.innerHTML = content;
+                } else {
+                  tabContents.textContent = content;
+                }
+              }
+
+              // Expand button click handler
+              expandBtn.addEventListener('click', async () => {
+                if (tabsContainer.style.display === 'none') {
+                  // Show loading
+                  loadingDiv.style.display = 'block';
+                  expandBtn.disabled = true;
+                  expandBtn.textContent = 'Loading...';
+
+                  try {
+                    // Fetch detailed analysis
+                    const res = await fetch(`/admin/api/review_analysis/${r.review_id}`, { credentials: 'include' });
+                    if (res.ok) {
+                      detailedData = await res.json();
+                      tabsContainer.style.display = 'block';
+                      expandBtn.textContent = 'Hide Details';
+                      updateTabContent();
+                    } else {
+                      console.error('Failed to fetch detailed analysis');
+                      tabContents.textContent = 'Failed to load detailed analysis';
+                    }
+                  } catch (error) {
+                    console.error('Error fetching detailed analysis:', error);
+                    tabContents.textContent = 'Error loading detailed analysis';
+                  } finally {
+                    loadingDiv.style.display = 'none';
+                    expandBtn.disabled = false;
+                  }
+                } else {
+                  // Hide details
+                  tabsContainer.style.display = 'none';
+                  expandBtn.textContent = 'Show Details';
+                }
+              });
+
+              // Create tab buttons
+              tabNames.forEach(name => {
+                const btn = document.createElement('button');
+                btn.textContent = name;
+                btn.style.padding = '0.3rem 0.6rem';
+                btn.style.border = '1px solid #666';
+                btn.style.borderRadius = '4px';
+                btn.style.cursor = 'pointer';
+                btn.style.backgroundColor = name === 'Original' ? '#9b59b6' : '#222';
+                btn.style.color = name === 'Original' ? 'white' : '#ddd';
+                btn.addEventListener('click', () => setActiveTab(name));
+                tabButtons.appendChild(btn);
+              });
+
+              // Assemble card
+              card.appendChild(usernameSpan);
+              card.appendChild(sentimentBadge);
+              card.appendChild(confidenceSpan);
+              card.appendChild(expandBtn);
+              card.appendChild(loadingDiv);
+              card.appendChild(tabsContainer);
+              tabsContainer.appendChild(tabButtons);
+              tabsContainer.appendChild(tabContents);
+
+              // Initialize first tab
+              updateTabContent();
+
+              reviewList.appendChild(card);
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching analytics data:', error);
+        }
+      }
+
+  // Password change form submission
+  document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('changePasswordBtn');
+    const messageDiv = document.getElementById('passwordChangeMessage');
+    btn.disabled = true;
+    btn.textContent = 'Updating...';
+    messageDiv.innerHTML = '';
+
+    const formData = new FormData(e.target);
+    const data = {
+      current_password: formData.get('current_password'),
+      new_password: formData.get('new_password'),
+      confirm_password: formData.get('confirm_password')
+    };
+
+    try {
+      const res = await fetch('/admin/change_password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        credentials: 'include',
+        body: new URLSearchParams(data)
+      });
+
+      const result = await res.json();
+      if (res.ok) {
+        messageDiv.innerHTML = '<div style="background: #22c55e; color: white; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem;">Password changed successfully!</div>';
+        e.target.reset();
+      } else {
+        messageDiv.innerHTML = '<div style="background: #dc3545; color: white; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem;">' + (result.error || 'Failed to change password') + '</div>';
+      }
+    } catch (error) {
+      messageDiv.innerHTML = '<div style="background: #dc3545; color: white; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem;">An error occurred. Please try again.</div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Update Password';
+    }
+  });
+
 </script>
 {% endblock %}
-
 
