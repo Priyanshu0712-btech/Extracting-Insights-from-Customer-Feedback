@@ -180,16 +180,12 @@
         <div class="chart-title" style="margin-top: 1rem;">Top Aspects by Sentiment</div>
         <div style="display: flex; gap: 1rem; margin-top: 1rem;">
           <div style="flex: 1;">
-            <h5 style="color: #22c55e; margin-bottom: 0.5rem;">Top  Positive Aspects</h5>
-            <div id="topPositiveAspects" style="background: #1a1a1a; padding: 0.5rem; border-radius: 4px; max-height: 200px; overflow-y: auto;">
-              <!-- Positive aspects will be loaded here -->
-            </div>
+            <h5 style="color: #22c55e; margin-bottom: 0.5rem;">Top Positive Aspects</h5>
+            <canvas id="topPositiveAspectsChart" height="200"></canvas>
           </div>
           <div style="flex: 1;">
-            <h5 style="color: #dc3545; margin-bottom: 0.5rem;">Top  Negative Aspects</h5>
-            <div id="topNegativeAspects" style="background: #1a1a1a; padding: 0.5rem; border-radius: 4px; max-height: 200px; overflow-y: auto;">
-              <!-- Negative aspects will be loaded here -->
-            </div>
+            <h5 style="color: #dc3545; margin-bottom: 0.5rem;">Top Negative Aspects</h5>
+            <canvas id="topNegativeAspectsChart" height="200"></canvas>
           </div>
         </div>
       </div>
@@ -276,27 +272,27 @@
   <div class="tab-content" id="settings" style="display: none;">
     <h3 style="color: #9b59b6; margin-bottom: 1rem;">Settings</h3>
     <div style="display: flex; justify-content: center;">
-      <div style="background: #222; border-radius: 8px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.7); border: 1px solid #444; max-width: 600px; width: 100%;">
+      <div style="background: #f3e5f5; border-radius: 8px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid #ccc; max-width: 600px; width: 100%;">
         <div style="border-bottom: 1px solid #9b59b6; padding-bottom: 1rem; margin-bottom: 1.5rem;">
           <h5 style="color: #9b59b6; margin: 0; font-weight: 700;">Change Password</h5>
         </div>
         <div style="margin-bottom: 1.5rem;">
-          <p style="color: #aaa; margin: 0;">Update your password to keep your account secure.</p>
+          <p style="color: #666; margin: 0;">Update your password to keep your account secure.</p>
         </div>
         <div id="passwordChangeMessage" style="margin-bottom: 1rem;"></div>
         <form id="changePasswordForm">
           <div style="margin-bottom: 1rem;">
-            <label for="current_password" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #ddd;">Current Password</label>
-            <input type="password" id="current_password" name="current_password" required placeholder="Enter your current password" style="width: 100%; padding: 0.75rem; border: 1px solid #555; border-radius: 4px; background: #333; color: #ddd; font-size: 1rem;">
+            <label for="current_password" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #333;">Current Password</label>
+            <input type="password" id="current_password" name="current_password" required placeholder="Enter your current password" style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #333; font-size: 1rem;">
           </div>
           <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
             <div style="flex: 1;">
-              <label for="new_password" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #ddd;">New Password</label>
-              <input type="password" id="new_password" name="new_password" required minlength="6" placeholder="Enter new password" style="width: 100%; padding: 0.75rem; border: 1px solid #555; border-radius: 4px; background: #333; color: #ddd; font-size: 1rem;">
+              <label for="new_password" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #333;">New Password</label>
+              <input type="password" id="new_password" name="new_password" required minlength="6" placeholder="Enter new password" style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #333; font-size: 1rem;">
             </div>
             <div style="flex: 1;">
-              <label for="confirm_password" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #ddd;">Confirm New Password</label>
-              <input type="password" id="confirm_password" name="confirm_password" required minlength="6" placeholder="Confirm new password" style="width: 100%; padding: 0.75rem; border: 1px solid #555; border-radius: 4px; background: #333; color: #ddd; font-size: 1rem;">
+              <label for="confirm_password" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #333;">Confirm New Password</label>
+              <input type="password" id="confirm_password" name="confirm_password" required minlength="6" placeholder="Confirm new password" style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #333; font-size: 1rem;">
             </div>
           </div>
           <button type="submit" id="changePasswordBtn" style="width: 100%; padding: 0.75rem; background: linear-gradient(90deg, #9b59b6, #4B0082); color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer;">Update Password</button>
@@ -382,11 +378,7 @@
     const timeRange = document.getElementById('filterTimeRange').value;
     const sentiment = document.getElementById('filterSentiment').value;
 
-    const res = await fetch(
-  `/admin/api/sentiment_trends?category=${category}&time_range=${timeRange}&sentiment=${sentiment}`,
-  { credentials: 'include' }
-);
-
+    const res = await fetch(`/admin/api/sentiment_trends?category=${category}&time_range=${timeRange}&sentiment=${sentiment}`, { credentials: 'include' });
     const data = await res.json();
 
     sentimentTrendsChart.data.labels = data.dates;
@@ -396,53 +388,89 @@
     sentimentTrendsChart.update();
   }
 
-  // Fetch and update top aspects lists
+  // Fetch and update top aspects bar charts
   async function fetchAspectSentimentDistribution() {
     const category = document.getElementById('filterCategory').value;
     const timeRange = document.getElementById('filterTimeRange').value;
     const sentiment = document.getElementById('filterSentiment').value;
 
-    const res = await fetch(
-  `/admin/api/aspect_sentiment_distribution?category=${category}&time_range=${timeRange}&sentiment=${sentiment}`,
-  { credentials: 'include' }
-);
-
+    const res = await fetch(`/admin/api/aspect_sentiment_distribution?category=${category}&time_range=${timeRange}&sentiment=${sentiment}`, { credentials: 'include' });
     const data = await res.json();
 
-    // Populate top positive aspects
-    const positiveContainer = document.getElementById('topPositiveAspects');
-    positiveContainer.innerHTML = '';
-    if (data.top_positive_aspects && data.top_positive_aspects.length > 0) {
-      data.top_positive_aspects.forEach(aspect => {
-        const item = document.createElement('div');
-        item.style.marginBottom = '0.5rem';
-        item.style.padding = '0.3rem';
-        item.style.borderRadius = '4px';
-        item.style.backgroundColor = '#2a2a2a';
-       item.innerHTML = `<strong>${aspect.aspect}</strong> (${aspect.count} reviews, ${aspect.avg_confidence}% confidence)`;
+    console.log("Aspect Sentiment Distribution Data:", data);  // Added log for debugging
 
-        positiveContainer.appendChild(item);
+    // Positive aspects bar chart
+    const positiveCtx = document.getElementById('topPositiveAspectsChart').getContext('2d');
+    if (window.positiveAspectsChart) {
+      window.positiveAspectsChart.destroy();
+    }
+    if (data.top_positive_aspects && data.top_positive_aspects.length > 0) {
+      const labels = data.top_positive_aspects.map(a => a.aspect);
+      const values = data.top_positive_aspects.map(a => a.avg_confidence * 100);
+      window.positiveAspectsChart = new Chart(positiveCtx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Confidence (%)',
+            data: values,
+            backgroundColor: '#22c55e',
+            borderColor: '#22c55e',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true, max: 100 }
+          }
+        }
       });
     } else {
-      positiveContainer.innerHTML = '<p style="color: #aaa; text-align: center;">No positive aspects found.</p>';
+      positiveCtx.font = '16px Arial';
+      positiveCtx.fillStyle = '#666';
+      positiveCtx.textAlign = 'center';
+      positiveCtx.fillText('No positive aspects found', positiveCtx.canvas.width / 2, positiveCtx.canvas.height / 2);
     }
 
-    // Populate top negative aspects
-    const negativeContainer = document.getElementById('topNegativeAspects');
-    negativeContainer.innerHTML = '';
+    // Negative aspects bar chart
+    const negativeCtx = document.getElementById('topNegativeAspectsChart').getContext('2d');
+    if (window.negativeAspectsChart) {
+      window.negativeAspectsChart.destroy();
+    }
     if (data.top_negative_aspects && data.top_negative_aspects.length > 0) {
-      data.top_negative_aspects.forEach(aspect => {
-        const item = document.createElement('div');
-        item.style.marginBottom = '0.5rem';
-        item.style.padding = '0.3rem';
-        item.style.borderRadius = '4px';
-        item.style.backgroundColor = '#2a2a2a';
-       item.innerHTML = `<strong>${aspect.aspect}</strong> (${aspect.count} reviews, ${aspect.avg_confidence}% confidence)`;
-
-        negativeContainer.appendChild(item);
+      const labels = data.top_negative_aspects.map(a => a.aspect);
+      const values = data.top_negative_aspects.map(a => a.avg_confidence * 100);
+      window.negativeAspectsChart = new Chart(negativeCtx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Confidence (%)',
+            data: values,
+            backgroundColor: '#dc3545',
+            borderColor: '#dc3545',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true, max: 100 }
+          }
+        }
       });
     } else {
-      negativeContainer.innerHTML = '<p style="color: #aaa; text-align: center;">No negative aspects found.</p>';
+      negativeCtx.font = '16px Arial';
+      negativeCtx.fillStyle = '#666';
+      negativeCtx.textAlign = 'center';
+      negativeCtx.fillText('No negative aspects found', negativeCtx.canvas.width / 2, negativeCtx.canvas.height / 2);
     }
   }
 
@@ -463,21 +491,8 @@
   document.getElementById('btnExportData').addEventListener('click', () => {
     // Prompt user for format
     const format = prompt('Enter export format (excel or pdf):', 'excel');
-
-if (format === 'excel') {
-  console.log('Exporting to Excel...');
-  // call your Excel export function here
-} else if (format === 'pdf') {
-  console.log('Exporting to PDF...');
-  // call your PDF export function here
-} else {
-  alert('Invalid format! Please enter either "excel" or "pdf".');
-}
-
-
     if (!format) return;
     const url = `/admin/export_data?format=${format.toLowerCase()}`;
-
     window.open(url, '_blank');
   });
 
@@ -536,11 +551,7 @@ if (format === 'excel') {
   // Delete user function
   async function deleteUser(userId) {
     if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
-    const res = await fetch(
-  `/admin/api/users/${userId}`,
-  { method: 'DELETE', credentials: 'include' }
-);
-
+    const res = await fetch(`/admin/api/users/${userId}`, { method: 'DELETE', credentials: 'include' });
     if (res.ok) {
       alert('User deleted successfully');
       fetchUsers(); // Refresh the list
@@ -671,6 +682,7 @@ if (format === 'excel') {
               // Username display
               const usernameSpan = document.createElement('span');
               usernameSpan.textContent = `User: ${r.username || 'Unknown'}`;
+
               usernameSpan.style.fontWeight = '700';
               usernameSpan.style.marginRight = '1rem';
               usernameSpan.style.color = '#ddd';
@@ -789,11 +801,7 @@ if (format === 'excel') {
 
                   try {
                     // Fetch detailed analysis
-                    const res = await fetch(
-  `/admin/api/review_analysis/${r.review_id}`,
-  { credentials: 'include' }
-);
-
+                    const res = await fetch(`/admin/api/review_analysis/${r.review_id}`, { credentials: 'include' });
                     if (res.ok) {
                       detailedData = await res.json();
                       tabsContainer.style.display = 'block';

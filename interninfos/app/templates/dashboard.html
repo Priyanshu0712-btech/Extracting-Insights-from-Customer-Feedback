@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}Dashboard | ReviewSense{% endblock %}
@@ -66,7 +67,7 @@
                     <h5 class="mb-3"><span style="font-size:1.5rem;vertical-align:middle;">🧭</span> What do you want to do next?</h5>
                     <a href="{{ url_for('main.profile') }}" class="btn btn-outline-primary me-2"><span style="font-size:1.2rem;vertical-align:middle;">👤</span> View Profile</a>
                     <a href="{{ url_for('main.upload_review') }}" class="btn btn-outline-success me-2"><span style="font-size:1.2rem;vertical-align:middle;">📝</span> Upload Reviews</a>
-                    <a href="#" class="btn btn-outline-warning"><span style="font-size:1.2rem;vertical-align:middle;">⚙️</span> Settings</a>
+                    <a href="{{ url_for('main.settings') }}" class="btn btn-outline-warning"><span style="font-size:1.2rem;vertical-align:middle;">⚙</span> Settings</a>
                 </div>
             </div>
         </div>

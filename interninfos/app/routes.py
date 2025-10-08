@@ -300,6 +300,46 @@ def profile():
     return render_template("profile.html", user=user, reviews=reviews, sentiment_counts=sentiment_counts)
 
 
+# ---------- Settings (Password Change) ----------
+@main.route("/settings", methods=["GET", "POST"])
+@jwt_required()
+def settings():
+    user_id = get_jwt_identity()
+    cursor = dict_cursor()
+
+    if request.method == "POST":
+        current_password = request.form.get("current_password", "")
+        new_password = request.form.get("new_password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        # Handle password change
+        if current_password and new_password and confirm_password:
+            # Get current user password hash
+            cursor.execute("SELECT password_hash FROM users WHERE user_id=%s", (user_id,))
+            user_data = cursor.fetchone()
+            if not user_data or not check_password_hash(user_data["password_hash"], current_password):
+                flash("Current password is incorrect.", "danger")
+            elif new_password != confirm_password:
+                flash("New passwords do not match.", "danger")
+            elif len(new_password) < 6:
+                flash("New password must be at least 6 characters long.", "warning")
+            else:
+                new_password_hash = generate_password_hash(new_password)
+                cursor.execute(
+                    "UPDATE users SET password_hash=%s WHERE user_id=%s",
+                    (new_password_hash, user_id)
+                )
+                mysql.connection.commit()
+                flash("Password changed successfully!", "success")
+                return redirect(url_for("main.settings"))
+
+    # fetch user for display
+    cursor.execute("SELECT user_id, username, email FROM users WHERE user_id=%s", (user_id,))
+    user = cursor.fetchone()
+    cursor.close()
+
+    return render_template("settings.html", user=user)
+
 
 # ---------- Upload Reviews (raw text) ----------
 @main.route("/upload_review", methods=["GET", "POST"])
@@ -453,10 +493,15 @@ def admin_api_stats():
     reviews_count = cursor.fetchone()['count']
     cursor.execute("SELECT COUNT(*) as count FROM aspect_categories")
     aspects_count = cursor.fetchone()['count']
-    cursor.close()
 
-    # Placeholder accuracy
-    accuracy = 95
+    # Calculate accuracy as percentage of reviews with overall_sentiment_score >= 0.7
+    cursor.execute("SELECT COUNT(*) as count FROM reviews WHERE overall_sentiment_score >= 0.7")
+    accurate_reviews_count = cursor.fetchone()['count']
+    accuracy = 0
+    if reviews_count > 0:
+        accuracy = round((accurate_reviews_count / reviews_count) * 100, 2)
+
+    cursor.close()
 
     return jsonify({"reviews": reviews_count, "aspects": aspects_count, "accuracy": accuracy})
 
