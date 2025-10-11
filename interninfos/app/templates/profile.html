@@ -126,7 +126,13 @@
     background: #1e1a3a !important;
     overflow-x: hidden !important;
   } 
+<<<<<<< SEARCH
 
+=======
+
+<<<<<<< SEARCH
+
+=======
   #analyze-reviews .left-panel {
     flex: 2;
     max-height: 90vh;
@@ -134,7 +140,7 @@
     padding-right: 10px;
     position: relative;
   }
-
+<<<<<<< SEARCH
   #analyze-reviews .right-panel {
     flex: 1.2;
     position: sticky;
@@ -142,7 +148,7 @@
     align-self: flex-start;
     height: fit-content;
   }
-
+=======
   #analyze-reviews .right-panel {
     flex: 1;
     position: sticky;
@@ -150,9 +156,14 @@
     align-self: flex-start;
     height: fit-content;
   }
-
-
-
+<<<<<<< SEARCH
+  /* Update Profile Tab */
+  <div class="tab-pane fade" id="update-profile">
+    <div class="card-box">
+      <h3 class="text-white mb-3">Update Profile</h3>
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+=======
   /* Update Profile Tab */
   <div class="tab-pane fade" id="update-profile">
     <div class="card-box" style="max-width: 900px; margin: 0 auto;">
@@ -559,7 +570,7 @@
                   <input class="form-control" type="email" name="email" value="{{ user.email }}" required readonly>
                 </div>
               </div>
-              <button class="btn btn-primary mt-4" type="submit" disabled>Save Changes</button>
+              <button class="btn btn-primary mt-4" type="submit" disabled >Save Changes</button>
               <button id="editProfileBtn" type="button" class="btn mt-4 ms-2" style="background-color: blue; color: white;">Edit</button>
             </form>
 
@@ -723,7 +734,7 @@
 
             <!-- Right Panel: Side Info -->
 <div class="right-panel">
-<div class="card-box text-center" style="background: white; color: black;">
+<div class="card-box text-center sentiment-overview" style="background: white; color: black; height: 100%; display: flex; flex-direction: column; margin-top: 10px;">
   <h4 class="text-dark">Sentiment Overview</h4>
   <p><strong>Total Reviews:</strong> {{ reviews|length }}</p>
   <div class="d-flex justify-content-around mb-3">
@@ -741,7 +752,9 @@
     </div>
   </div>
   <p style="color: #333;">Sentiment Distribution of Your Reviews</p>
-  <canvas id="sentimentChart" width="300" height="300" style="max-width: 100%; height: auto; margin: 0 auto;"></canvas>
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+    <canvas id="sentimentChart" width="300" height="300" style="max-width: 100%; height: auto; margin: 0 auto;"></canvas>
+  </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -1384,7 +1397,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const showingCount = filteredCards.length;
     filteredCount.textContent = `Showing ${showingCount} of ${totalReviews} reviews`;
 
-
     // Reorder DOM elements to match sorted order
     const container = document.querySelector('.left-panel');
     const title = container.querySelector('.analyzed-title');
@@ -1414,3 +1426,4 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 {% endblock %}
+
