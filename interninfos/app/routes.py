@@ -16,6 +16,9 @@ from . import nlp_utils  # Import NLP utilities
 # Import specific functions from nlp_utils to avoid conflicts
 from .nlp_utils import map_sentiment, highlight_keywords, preprocess_text
 
+# Import for PDF generation
+from reportlab.graphics.charts.barcharts import VerticalBarChart
+
 main = Blueprint('main', __name__, url_prefix="/")
 
 # ---------- Helpers ----------
@@ -768,7 +771,13 @@ def admin_api_get_users():
         return {"error": "Unauthorized"}, 403
 
     cursor = dict_cursor()
-    cursor.execute("SELECT user_id, username, email, created_at FROM users ORDER BY user_id")
+    cursor.execute("""
+        SELECT u.user_id, u.username, u.email, u.created_at, COUNT(r.review_id) as total_reviews
+        FROM users u
+        LEFT JOIN reviews r ON u.user_id = r.user_id
+        GROUP BY u.user_id, u.username, u.email, u.created_at
+        ORDER BY u.user_id
+    """)
     users = cursor.fetchall()
     cursor.close()
 
@@ -835,6 +844,8 @@ def admin_export_data():
     if claims.get("role") != "admin":
         return {"error": "Unauthorized"}, 403
 
+    format_type = request.args.get('format', 'excel').lower()
+
     cursor = dict_cursor()
     cursor.execute("""
         SELECT r.review_text, r.uploaded_at, r.overall_sentiment, r.overall_sentiment_score, u.username
@@ -845,14 +856,186 @@ def admin_export_data():
     reviews = cursor.fetchall()
     cursor.close()
 
-    from openpyxl import Workbook
-    wb = Workbook()
-    ws = wb.active
-    ws.append(['Username', 'Review Text', 'Uploaded At', 'Sentiment', 'Score'])
-    for r in reviews:
-        ws.append([r['username'], r['review_text'], r['uploaded_at'], r['overall_sentiment'], r['overall_sentiment_score']])
-    from io import BytesIO
-    bio = BytesIO()
-    wb.save(bio)
-    bio.seek(0)
-    return send_file(bio, as_attachment=True, download_name='reviews.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    if format_type == 'pdf':
+        # Generate PDF with detailed summary and pie chart
+        from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
+        from reportlab.lib import colors
+        from reportlab.graphics.shapes import Drawing
+        from reportlab.graphics.charts.piecharts import Pie
+        from reportlab.graphics import renderPDF
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+        from io import BytesIO
+
+        bio = BytesIO()
+        doc = SimpleDocTemplate(bio, pagesize=letter)
+        styles = getSampleStyleSheet()
+        story = []
+
+        # Title
+        title = Paragraph("Review Summary Report", styles['Title'])
+        story.append(title)
+        story.append(Spacer(1, 12))
+
+        # Calculate sentiment counts
+        sentiment_counts = {'positive': 0, 'negative': 0, 'neutral': 0}
+        for r in reviews:
+            sent = r['overall_sentiment'].lower() if r['overall_sentiment'] else 'neutral'
+            if sent in sentiment_counts:
+                sentiment_counts[sent] += 1
+
+        total_reviews = len(reviews)
+
+        # Summary text
+        summary_text = f"Total Reviews: {total_reviews}<br/>"
+        summary_text += f"Positive: {sentiment_counts['positive']} ({sentiment_counts['positive']/total_reviews*100:.1f}%)<br/>"
+        summary_text += f"Negative: {sentiment_counts['negative']} ({sentiment_counts['negative']/total_reviews*100:.1f}%)<br/>"
+        summary_text += f"Neutral: {sentiment_counts['neutral']} ({sentiment_counts['neutral']/total_reviews*100:.1f}%)<br/>"
+
+        # Determine dominant sentiment
+        dominant = max(sentiment_counts, key=sentiment_counts.get)
+        summary_text += f"<br/>Overall, the reviews show a predominantly <b>{dominant}</b> sentiment."
+
+        summary = Paragraph(summary_text, styles['Normal'])
+        story.append(summary)
+        story.append(Spacer(1, 12))
+
+        # Fetch top aspects (similar to analytics)
+        cursor = dict_cursor()
+        cursor.execute("""
+            SELECT review_text, overall_sentiment
+            FROM reviews
+            ORDER BY uploaded_at DESC LIMIT 100
+        """)
+        recent_reviews = cursor.fetchall()
+        cursor.close()
+
+        # Analyze aspects
+        positive_aspects = {}
+        negative_aspects = {}
+
+        for review in recent_reviews:
+            analysis = nlp_utils.analyze_review_detailed(review['review_text'], review['overall_sentiment'], 0.0)
+            for aspect, sent_info in analysis['aspect_sentiments'].items():
+                sentiment = sent_info['sentiment']
+                confidence = sent_info['confidence']
+
+                if sentiment.lower() == 'positive':
+                    if aspect not in positive_aspects:
+                        positive_aspects[aspect] = {'count': 0, 'total_confidence': 0.0}
+                    positive_aspects[aspect]['count'] += 1
+                    positive_aspects[aspect]['total_confidence'] += confidence
+                elif sentiment.lower() == 'negative':
+                    if aspect not in negative_aspects:
+                        negative_aspects[aspect] = {'count': 0, 'total_confidence': 0.0}
+                    negative_aspects[aspect]['count'] += 1
+                    negative_aspects[aspect]['total_confidence'] += confidence
+
+        # Process top aspects
+        def process_aspects(aspects_dict):
+            processed = []
+            for aspect, data in aspects_dict.items():
+                avg_confidence = data['total_confidence'] / data['count'] if data['count'] > 0 else 0.0
+                processed.append({
+                    'aspect': aspect,
+                    'count': data['count'],
+                    'avg_confidence': round(avg_confidence, 2)
+                })
+            processed.sort(key=lambda x: (x['count'], x['avg_confidence']), reverse=True)
+            return processed[:5]  # Top 5
+
+        top_positive = process_aspects(positive_aspects)
+        top_negative = process_aspects(negative_aspects)
+
+        # Add top aspects to PDF
+        if top_positive:
+            pos_text = "<b>Top Positive Aspects:</b><br/>"
+            for asp in top_positive:
+                pos_text += f"- {asp['aspect']}: {asp['count']} mentions (avg confidence: {asp['avg_confidence']})<br/>"
+            pos_para = Paragraph(pos_text, styles['Normal'])
+            story.append(pos_para)
+            story.append(Spacer(1, 6))
+
+        if top_negative:
+            neg_text = "<b>Top Negative Aspects:</b><br/>"
+            for asp in top_negative:
+                neg_text += f"- {asp['aspect']}: {asp['count']} mentions (avg confidence: {asp['avg_confidence']})<br/>"
+            neg_para = Paragraph(neg_text, styles['Normal'])
+            story.append(neg_para)
+            story.append(Spacer(1, 12))
+
+        # Pie chart
+        if total_reviews > 0:
+            drawing = Drawing(400, 200)
+            pie = Pie()
+            pie.x = 150
+            pie.y = 50
+            pie.width = 120
+            pie.height = 120
+            pie.data = [sentiment_counts['positive'], sentiment_counts['negative'], sentiment_counts['neutral']]
+            pie.labels = ['Positive', 'Negative', 'Neutral']
+            pie.slices.strokeWidth = 0.5
+            pie.slices[0].fillColor = colors.green
+            pie.slices[1].fillColor = colors.red
+            pie.slices[2].fillColor = colors.yellow
+            drawing.add(pie)
+            story.append(drawing)
+
+        # Bar chart for top positive aspects
+        if top_positive:
+            story.append(Spacer(1, 12))
+            pos_title = Paragraph("<b>Top Positive Aspects</b>", styles['Heading2'])
+            story.append(pos_title)
+            story.append(Spacer(1, 6))
+
+            drawing = Drawing(400, 200)
+            bc = VerticalBarChart()
+            bc.x = 50
+            bc.y = 50
+            bc.height = 125
+            bc.width = 300
+            bc.data = [[asp['count'] for asp in top_positive]]
+            bc.categoryAxis.categoryNames = [asp['aspect'] for asp in top_positive]
+            bc.valueAxis.valueMin = 0
+            bc.bars[0].fillColor = colors.green
+            drawing.add(bc)
+            story.append(drawing)
+
+        # Bar chart for top negative aspects
+        if top_negative:
+            story.append(Spacer(1, 12))
+            neg_title = Paragraph("<b>Top Negative Aspects</b>", styles['Heading2'])
+            story.append(neg_title)
+            story.append(Spacer(1, 6))
+
+            drawing = Drawing(400, 200)
+            bc = VerticalBarChart()
+            bc.x = 50
+            bc.y = 50
+            bc.height = 125
+            bc.width = 300
+            bc.data = [[asp['count'] for asp in top_negative]]
+            bc.categoryAxis.categoryNames = [asp['aspect'] for asp in top_negative]
+            bc.valueAxis.valueMin = 0
+            bc.bars[0].fillColor = colors.red
+            drawing.add(bc)
+            story.append(drawing)
+
+        doc.build(story)
+        bio.seek(0)
+        return send_file(bio, as_attachment=True, download_name='review_summary.pdf', mimetype='application/pdf')
+
+    else:
+        # Default to Excel
+        from openpyxl import Workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.append(['Username', 'Review Text', 'Uploaded At', 'Sentiment', 'Score'])
+        for r in reviews:
+            ws.append([r['username'], r['review_text'], r['uploaded_at'], r['overall_sentiment'], r['overall_sentiment_score']])
+        from io import BytesIO
+        bio = BytesIO()
+        wb.save(bio)
+        bio.seek(0)
+        return send_file(bio, as_attachment=True, download_name='reviews.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
