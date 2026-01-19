@@ -31,8 +31,3 @@ Small Flask app for uploading and reviewing customer feedback.
    ```
 
    Open http://127.0.0.1:5000
-
-## Notes
-
-- Do not commit `.env` with real secrets — use `.env.example` instead.
-- Prefer creating a non-root DB user for production.
